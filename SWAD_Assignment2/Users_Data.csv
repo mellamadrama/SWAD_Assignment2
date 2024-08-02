@@ -1,10 +1,10 @@
-2123456789, John Doe, 123-456-7800, johndoe@gmail.com, 123, 1979-04-17, Admin
-2345678901, Jane Smith, 123-456-7801, janesmith@gmail.com, 123, 1977-05-20, Admin
-3123456789, Alice Johnson, 123-456-7802, alicejohnson@gamil.com, 123, 1986-02-24, Renter
-3234567890, Robert Brown, 123-456-7803, robertbrown@gamil.com, 123, 2004-03-22, Renter
-3345678901, Emily Davis, 123-456-7804, emilydavis@gmail.com, 123, 1974-11-06, Renter
-3456789012, Michael Wilson, 123-456-7805, michaelwilson@gmail.com, 123, 2004-07-10, Renter
-1123456789, Mary Clark, 123-456-7806, maryclark@gmail.com, 123, 2003-06-22, Car Owner
-1234567890, David Lewis, 123-456-7807, davidlewis@gmail.com, 123, 1994-08-23, Car Owner
-1356789012, Sarah Walker, 123-456-7808, sarahwalker@gmail.com, 123, 1987-08-19, Car Owner
-1456789013, James Young, 123-456-7809, jamesyoung@gmail.com, 123, 2004-10-27, Car Owner
+21234, John Doe, 4567800, johndoe@gmail.com, 123, 1979-04-17, Admin
+23456, Jane Smith, 4567801, janesmith@gmail.com, 123, 1977-05-20, Admin
+31234, Alice Johnson, 4567802, alicejohnson@gamil.com, 123, 1986-02-24, 12345678, valid, 0, Renter
+32345, Robert Brown, 4567803, robertbrown@gamil.com, 123, 2004-03-22, 22345678, vaild, 0, Renter
+33456, Emily Davis, 4567804, emilydavis@gmail.com, 123, 1974-11-06, 32345678, vaild, 0, Renter
+34567, Michael Wilson, 4567805, michaelwilson@gmail.com, 123, 2004-07-10, 42345678, valid, 0, Renter
+11234, Mary Clark, 4567806, maryclark@gmail.com, 123, 2003-06-22, 52345678, Car Owner
+12345, David Lewis, 4567807, davidlewis@gmail.com, 123, 1994-08-23, 62345678, Car Owner
+13456, Sarah Walker, 4567808, sarahwalker@gmail.com, 123, 1987-08-19, 72345678, Car Owner
+14567, James Young, 4567809, jamesyoung@gmail.com, 123, 2004-10-27, 82345678, Car Owner

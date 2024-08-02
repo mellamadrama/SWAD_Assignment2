@@ -9,17 +9,17 @@ namespace SWAD_Assignment2
 {
     internal class Car_Owner : User
     {
-        private int licence;
-        public int Liscence
+        private int license;
+        public int License
         {
-            get { return licence; }
-            set { licence = value; }
+            get { return license; }
+            set { license = value; }
         }
         public Car_Owner() { }
         public Car_Owner(int id, string fullName, int contactNum, string email, int password, DateTime dateOfBirth, int license)
             : base(id, fullName, contactNum, email, password, dateOfBirth)
         {
-            this.licence = license;
+            this.license = license;
         }
         public override string GetRole() => "Car Owner";
     }

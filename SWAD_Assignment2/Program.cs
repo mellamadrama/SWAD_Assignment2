@@ -4,64 +4,138 @@ using SWAD_Assignment2;
 using System.ComponentModel;
 using System.Formats.Asn1;
 using System.Globalization;
+static List<User> LoadUsersFromCSV(string csvFilePath)
+{
+    var users = new List<User>();
 
-//class Program
-//{
-//    static List<User> LoadUsersFromCSV(string filePath)
-//    {
-//        var users = new List<User>();
+    foreach (var line in File.ReadLines(csvFilePath))
+    {
+        var values = line.Split(',');
+        int id = Convert.ToInt32(values[0].Trim());
+        string fullName = values[1].Trim();
+        int contactNum = Convert.ToInt32(values[2].Trim());
+        string email = values[3].Trim();
+        int password = Convert.ToInt32(values[4].Trim());
+        DateTime dateOfBirth = DateTime.ParseExact(values[5].Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture);
+        string role = values[values.Length - 1].Trim();
+        int licence = values.Length > 6 && (role == "Car Owner" || role == "Renter") ? int.Parse(values[6].Trim()) : 0;
+        string licenseStatus = values.Length > 7 && role == "Renter" ? values[7].Trim() : null;
+        int demeritPoints = values.Length > 8 && role == "Renter" ? int.Parse(values[8].Trim()) : 0;
 
-//        foreach (var line in File.ReadLines(filePath))
-//        {
-//            var values = line.Split(',');
-//            int id = int.Parse(values[0].Trim());
-//            string fullName = values[1].Trim();
-//            int contactNum = int.Parse(values[2].Trim().Replace("-", ""));
-//            string email = values[3].Trim();
-//            int password = int.Parse(values[4].Trim());
-//            DateTime dateOfBirth = DateTime.ParseExact(values[5].Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture);
-//            string role = values[6].Trim();
+        switch (role)
+        {
+            case "Admin":
+                users.Add(new iCar_Admin(id, fullName, contactNum, email, password, dateOfBirth));
+                break;
+            case "Car Owner":
+                users.Add(new Car_Owner(id, fullName, contactNum, email, password, dateOfBirth, licence));
+                break;
+            case "Renter":
+                users.Add(new Renter(id, fullName, contactNum, email, password, dateOfBirth, licence, licenseStatus, demeritPoints));
+                break;
+        }
+    }
 
-//            switch (role)
-//            {
-//                case "Admin":
-//                    users.Add(new iCar_Admin(id, fullName, contactNum, email, password, dateOfBirth));
-//                    break;
-//                case "Car Owner":
-//                    users.Add(new Car_Owner(id, fullName, contactNum, email, password, dateOfBirth, license));
-//                    break;
-//                case "Renter":
-//                    users.Add(new Renter(id, fullName, contactNum, email, password, dateOfBirth));
-//                    break;
-//            }
-//        }
+    return users;
+}
 
-//        return users;
-//    }
 
-//    static void Main(string[] args)
-//    {
-//        string csvFilePath = "users.csv"; // Path to your CSV file
-//        var users = LoadUsersFromCSV(csvFilePath);
+string csvFilePath = "Users_Data.csv";
+var users = LoadUsersFromCSV(csvFilePath);
 
-//        // Login process
-//        Console.WriteLine("Enter email:");
-//        string email = Console.ReadLine();
+// Login process
+Console.Write("Welcome! Please login below.");
+Console.WriteLine();
+Console.WriteLine();
 
-//        Console.WriteLine("Enter password:");
-//        int password = int.Parse(Console.ReadLine());
+User user = null;
+int emailAttempts = 0;
+bool emailValid = false;
+string email = string.Empty;
 
-//        User user = users.FirstOrDefault(u => u.Authenticate(email, password));
+while (emailAttempts < 3)
+{
+    Console.WriteLine("Enter email:");
+    email = Console.ReadLine();
+    if (users.Any(u => u.Email == email))
+    {
+        emailValid = true;
+        break;
+    }
+    else
+    {
+        emailAttempts++;
+        if (emailAttempts < 3)
+        {
+            Console.WriteLine($"Invalid email. You have {3 - emailAttempts} attempts left.");
+            Console.WriteLine();
+        }
+    }
+}
 
-//        if (user != null)
-//        {
-//            Console.WriteLine($"Welcome, {user.FullName}");
-//            Console.WriteLine($"Role: {user.GetRole()}");
-//            Console.WriteLine($"Date of Birth: {user.DateOfBirth.ToShortDateString()}");
-//        }
-//        else
-//        {
-//            Console.WriteLine("Invalid email or password.");
-//        }
-//    }
-//}
+if (!emailValid)
+{
+    Console.WriteLine() ;
+    Console.WriteLine("Too many failed attempts. System will exit.");
+    return;
+}
+
+int passwordAttempts = 0;
+
+while (passwordAttempts < 3)
+{
+    Console.WriteLine();
+    Console.WriteLine("Enter password:");
+    int password;
+    string passwordInput = Console.ReadLine();
+
+    if (!int.TryParse(passwordInput, out password))
+    {
+        passwordAttempts++;
+        if (passwordAttempts < 3)
+        {
+            Console.WriteLine($"Invalid input. Please enter a numeric password. You have {3 - passwordAttempts} attempts left.");
+        }
+    }
+    else
+    {
+        user = users.FirstOrDefault(u => u.Email == email && u.Password == password);
+
+        if (user != null)
+        {
+            break;
+        }
+        else
+        {
+            passwordAttempts++;
+            if (passwordAttempts < 3)
+            {
+                Console.WriteLine($"Invalid password. You have {3 - passwordAttempts} attempts left.");
+            }
+        }
+    }
+}
+
+
+if (user != null)
+{
+    Console.WriteLine();
+    Console.WriteLine($"Welcome, {user.FullName}");
+    Console.WriteLine($"Role: {user.GetRole()}");
+    Console.WriteLine($"Date of Birth: {user.DateOfBirth.ToShortDateString()}");
+
+    if (user is Car_Owner carOwner)
+    {
+        Console.WriteLine($"Licence: {carOwner.License}");
+    }
+    else if (user is Renter renter)
+    {
+        Console.WriteLine($"Licence: {renter.LicenseNum}");
+        Console.WriteLine($"License Status: {renter.LicenseStatus}");
+        Console.WriteLine($"Demerit Points: {renter.DemeritPoints}");
+    }
+}
+else
+{
+    Console.WriteLine("Too many failed attempts. System will exit.");
+}
