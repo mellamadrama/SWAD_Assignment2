@@ -14,7 +14,6 @@ namespace SWAD_Assignment2
         private string pickupLocation;
         private string returnLocation;
         private bool isDelivery;
-        private string renter;
         private string status;
         public int BookingId
         {
@@ -41,11 +40,6 @@ namespace SWAD_Assignment2
             get { return returnLocation; }
             set { returnLocation = value; }
         }
-        public string Renter
-        {
-            get { return renter; }
-            set { renter = value; }
-        }
         public bool IsDelivery
         {
             get { return isDelivery; }
@@ -55,6 +49,17 @@ namespace SWAD_Assignment2
         {
             get { return status; }
             set { status = value; }
+        }
+        public Booking() { }
+        public Booking(int bookingId, DateTime startTimeSlot, DateTime endTimeSlot, string pickupLocation, string returnLocation, bool isDelivery, string status)
+        {
+            this.bookingId = bookingId;
+            this.startTimeSlot = startTimeSlot;
+            this.endTimeSlot = endTimeSlot;
+            this.pickupLocation = pickupLocation;
+            this.returnLocation = returnLocation;
+            this.isDelivery = isDelivery;
+            this.status = status;
         }
     }
 }
