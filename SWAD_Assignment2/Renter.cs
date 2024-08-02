@@ -28,12 +28,13 @@ namespace SWAD_Assignment2
             set { demeritPoints = value; }
         }
         public Renter() : base() { }
-        public Renter(int id, string fullName, int contactNum, string email, DateTime dateOfBirth,
-            int licenseNum, string licenseStatus, int demeritPoints) : base(id, fullName, contactNum, email, dateOfBirth)
+        public Renter(int id, string fullName, int contactNum, string email, int password, DateTime dateOfBirth,
+            int licenseNum, string licenseStatus, int demeritPoints) : base(id, fullName, contactNum, email, password, dateOfBirth)
         {
             this.licenseNum = licenseNum;
             this.licenseStatus = licenseStatus;
             this.demeritPoints = demeritPoints;
         }
+        public override string GetRole() => "Renter";
     }
 }

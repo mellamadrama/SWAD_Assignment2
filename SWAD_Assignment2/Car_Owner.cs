@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace SWAD_Assignment2
 {
-    internal class Car_Owner
+    internal class Car_Owner : User
     {
         private int licence;
         public int Liscence
@@ -15,9 +16,11 @@ namespace SWAD_Assignment2
             set { licence = value; }
         }
         public Car_Owner() { }
-        public Car_Owner(int license)
+        public Car_Owner(int id, string fullName, int contactNum, string email, int password, DateTime dateOfBirth, int license)
+            : base(id, fullName, contactNum, email, password, dateOfBirth)
         {
-           this.licence = licence;
+            this.licence = license;
         }
+        public override string GetRole() => "Car Owner";
     }
 }
