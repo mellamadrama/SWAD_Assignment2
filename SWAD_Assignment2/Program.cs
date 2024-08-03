@@ -164,11 +164,88 @@ if (user != null)
         Console.WriteLine($"License Status: {renter.LicenseStatus}");
         Console.WriteLine($"Demerit Points: {renter.DemeritPoints}");
 
-        Console.WriteLine();
-        Console.WriteLine("List of Cars to Rent:");
-        foreach (var car in cars)
+        while (true)
         {
-            Console.WriteLine($"{"License Plate:",-14} {car.LicensePlate,-9} {"Make:",-5} {car.CarMake,-15} {"Model:",-6} {car.Model,-9} {"Year:",-5} {car.Year,-6} {"Mileage:",-8} {car.Mileage,-14} {"Availability:",-13} {car.Availability}");
+            Console.WriteLine();
+            Console.WriteLine("1. Book a Car");
+            Console.WriteLine("2. View Booking History");
+            Console.WriteLine("3. View Payment History");
+            Console.WriteLine("4. Exit");
+            Console.WriteLine("Choose an option:");
+
+            string choice = Console.ReadLine();
+
+            switch (choice)
+            {
+                case "1":
+                    BookCar(cars);
+                    break;
+                case "2":
+                    ViewBookingHistory(renter);
+                    break;
+                case "3":
+                    ViewPaymentHistory(renter);
+                    break;
+                case "4":
+                    Console.WriteLine("Goodbye!");
+                    return;
+                default:
+                    Console.WriteLine("Invalid choice. Please try again.");
+                    break;
+            }
+        }
+
+        static void BookCar(List<Car> cars)
+        {
+            Console.WriteLine();
+            Console.WriteLine("List of Cars to Rent:");
+            foreach (var car in cars)
+            {
+                Console.WriteLine($"{"License Plate:",-14} {car.LicensePlate,-9} {"Make:",-5} {car.CarMake,-15} {"Model:",-6} {car.Model,-9} {"Year:",-5} {car.Year,-6} {"Mileage:",-8} {car.Mileage,-14} {"Availability:",-13} {car.Availability}");
+            }
+
+            Car selectedCar = null;
+
+            while (selectedCar == null)
+            {
+                Console.WriteLine();
+                Console.WriteLine("Please enter the license plate of your selected car: ");
+                string licensePlate = Console.ReadLine();
+
+                selectedCar = cars.FirstOrDefault(car => car.LicensePlate.Equals(licensePlate, StringComparison.OrdinalIgnoreCase));
+
+                if (selectedCar == null)
+                {
+                    Console.WriteLine("Invalid license plate. Please try again.");
+                }
+            }
+
+            string bookingInput = string.Empty;
+
+            while (!string.Equals(bookingInput, "Make Booking", StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine("Enter 'Make Booking' to start the booking: ");
+                bookingInput = Console.ReadLine();
+
+                if (!string.Equals(bookingInput, "Make Booking", StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.WriteLine("Invalid input. Please enter 'Make Booking' exactly as instructed.");
+                }
+            }
+
+            Console.WriteLine();
+            Console.WriteLine("Car Details:");
+            Console.WriteLine($"{"License Plate:",-14} {selectedCar.LicensePlate,-9} {"Make:",-5} {selectedCar.CarMake,-15} {"Model:",-6} {selectedCar.Model,-9} {"Year:",-5} {selectedCar.Year,-6} {"Mileage:",-8} {selectedCar.Mileage,-14} {"Availability:",-13} {selectedCar.Availability}");
+        }
+
+        static void ViewBookingHistory(Renter renter)
+        {
+            Console.WriteLine("Booking History:");
+        }
+
+        static void ViewPaymentHistory(Renter renter)
+        {
+            Console.WriteLine("Payment History:");
         }
     }
 }
