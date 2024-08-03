@@ -155,7 +155,7 @@ if (user != null)
         Console.WriteLine("Cars Owned:");
         foreach (var car in ownerCars)
         {
-            Console.WriteLine($"{"License Plate:",-14} {car.LicensePlate,-8} {"Make:",-5} {car.CarMake,-10} {"Model:",-6} {car.Model,-8} {"Year:",-5} {car.Year,-6} {"Mileage:",-8} {car.Mileage,-10}");
+            Console.WriteLine($"{"License Plate:",-14} {car.LicensePlate,-9} {"Make:",-5} {car.CarMake,-15} {"Model:",-6} {car.Model,-9} {"Year:",-5} {car.Year,-6} {"Mileage:",-8} {car.Mileage}");
         }
     }
     else if (user is Renter renter)
@@ -163,6 +163,13 @@ if (user != null)
         Console.WriteLine($"Licence: {renter.LicenseNum}");
         Console.WriteLine($"License Status: {renter.LicenseStatus}");
         Console.WriteLine($"Demerit Points: {renter.DemeritPoints}");
+
+        Console.WriteLine();
+        Console.WriteLine("List of Cars to Rent:");
+        foreach (var car in cars)
+        {
+            Console.WriteLine($"{"License Plate:",-14} {car.LicensePlate,-9} {"Make:",-5} {car.CarMake,-15} {"Model:",-6} {car.Model,-9} {"Year:",-5} {car.Year,-6} {"Mileage:",-8} {car.Mileage,-14} {"Availability:",-13} {car.Availability}");
+        }
     }
 }
 else
