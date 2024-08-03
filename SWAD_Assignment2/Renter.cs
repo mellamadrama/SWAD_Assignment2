@@ -11,6 +11,7 @@ namespace SWAD_Assignment2
         private int licenseNum;
         private string licenseStatus;
         private int demeritPoints;
+        private List<Booking> bookings;
 
         public int LicenseNum
         {
@@ -27,13 +28,19 @@ namespace SWAD_Assignment2
             get { return demeritPoints; }
             set { demeritPoints = value; }
         }
+        public List<Booking> Bookings
+        {
+            get { return bookings; }
+            set { bookings = value; }
+        }
         public Renter() : base() { }
         public Renter(int id, string fullName, int contactNum, string email, int password, DateTime dateOfBirth,
-            int licenseNum, string licenseStatus, int demeritPoints) : base(id, fullName, contactNum, email, password, dateOfBirth)
+            int licenseNum, string licenseStatus, int demeritPoints, List<Booking> bookings) : base(id, fullName, contactNum, email, password, dateOfBirth)
         {
             this.licenseNum = licenseNum;
             this.licenseStatus = licenseStatus;
             this.demeritPoints = demeritPoints;
+            this.bookings=bookings;
         }
         public override string GetRole() => "Renter";
     }

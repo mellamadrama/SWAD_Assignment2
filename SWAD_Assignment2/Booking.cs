@@ -9,12 +9,11 @@ namespace SWAD_Assignment2
     internal class Booking
     {
         private int bookingId;
-        private DateTime startTimeSlot;
-        private DateTime endTimeSlot;
-        private string pickupLocation;
-        private string returnLocation;
-        private bool isDelivery;
+        private DateTime startDate;
+        private DateTime endDate;
         private string status;
+        private ReturnMethod returnMethod;
+        private Payment payment;
         public int BookingId
         {
             get { return bookingId; }
@@ -22,44 +21,38 @@ namespace SWAD_Assignment2
         }
         public DateTime StartTimeSlot
         {
-            get { return startTimeSlot; }
-            set { startTimeSlot = value; }
+            get { return startDate; }
+            set { startDate = value; }
         }
         public DateTime EndTimeSlot
         {
-            get { return endTimeSlot; }
-            set { endTimeSlot = value; }
-        }
-        public string PickupLocation
-        {
-            get { return pickupLocation; }
-            set { pickupLocation = value; }
-        }
-        public string ReturnLocation
-        {
-            get { return returnLocation; }
-            set { returnLocation = value; }
-        }
-        public bool IsDelivery
-        {
-            get { return isDelivery; }
-            set { isDelivery = value; }
+            get { return endDate; }
+            set { endDate = value; }
         }
         public string Status
         {
             get { return status; }
             set { status = value; }
         }
+        public ReturnMethod ReturnMethod
+        {
+            get { return returnMethod; }
+            set { returnMethod = value; }
+        }
+        public Payment Payment
+        {
+            get { return payment; }
+            set { payment = value; }
+        }
         public Booking() { }
-        public Booking(int bookingId, DateTime startTimeSlot, DateTime endTimeSlot, string pickupLocation, string returnLocation, bool isDelivery, string status)
+        public Booking(int bookingId, DateTime startTimeSlot, DateTime endTimeSlot, string status, ReturnMethod returnMethod, Payment payment)
         {
             this.bookingId = bookingId;
-            this.startTimeSlot = startTimeSlot;
-            this.endTimeSlot = endTimeSlot;
-            this.pickupLocation = pickupLocation;
-            this.returnLocation = returnLocation;
-            this.isDelivery = isDelivery;
+            this.startDate = startTimeSlot;
+            this.endDate = endTimeSlot;
             this.status = status;
+            this.returnMethod=returnMethod;
+            this.payment=payment;
         }
     }
 }

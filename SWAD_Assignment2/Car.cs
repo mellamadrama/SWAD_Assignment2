@@ -9,12 +9,14 @@ namespace SWAD_Assignment2
     internal class Car
     {
         private int carOwnerId;
-        private string licensePlate;
+        private string carPlateNo;
         private string carMake;
         private string model;
         private int year;
         private string mileage;
         private string availability;
+        private Insurance insurance;
+        private List<Booking> bookings;
         public int CarOwnerId
         {
             get { return carOwnerId; }
@@ -22,8 +24,8 @@ namespace SWAD_Assignment2
         }
         public string LicensePlate
         {
-            get { return licensePlate; }
-            set { licensePlate = value; }
+            get { return carPlateNo; }
+            set { carPlateNo = value; }
         }
         public string CarMake
         {
@@ -50,16 +52,28 @@ namespace SWAD_Assignment2
             get { return availability; }
             set { availability = value; }
         }
+        public Insurance Insurance
+        {
+            get { return insurance; }
+            set { insurance = value; }
+        }
+        public List<Booking> Bookings
+        {
+            get { return bookings; }
+            set { bookings = value; }
+        }
         public Car() { }
-        public Car(int carOwnerId, string lisencePlate, string carMake, string model, int year, string mileage, string availability)
+        public Car(int carOwnerId, string carPlateNo, string carMake, string model, int year, string mileage, string availability, Insurance insurance, List<Booking> bookings)
         {
             this.carOwnerId = carOwnerId;
-            this.licensePlate = lisencePlate;
+            this.carPlateNo = carPlateNo;
             this.carMake = carMake;
             this.model = model;
             this.year = year;
             this.mileage = mileage;
             this.availability = availability;
+            this.insurance=insurance;
+            this.bookings=bookings;
         }
     }
 }

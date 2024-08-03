@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SWAD_Assignment2
 {
-    internal class Return
+    internal class AdditionalCharge
     {
     }
 }
