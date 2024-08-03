@@ -8,13 +8,23 @@ namespace SWAD_Assignment2
 {
     internal class Car
     {
+        private int carOwnerId;
+        private string licensePlate;
         private string carMake;
         private string model;
         private int year;
-        private int mileage;
-        //private .. photo;
+        private string mileage;
         private string availability;
-
+        public int CarOwnerId
+        {
+            get { return carOwnerId; }
+            set { carOwnerId = value; }
+        }
+        public string LicensePlate
+        {
+            get { return licensePlate; }
+            set { licensePlate = value; }
+        }
         public string CarMake
         {
             get { return carMake; } 
@@ -30,7 +40,7 @@ namespace SWAD_Assignment2
             get { return year; }
             set { year = value; }
         }
-        public int Mileage
+        public string Mileage
         {
             get { return mileage; }
             set { mileage = value; }
@@ -41,8 +51,10 @@ namespace SWAD_Assignment2
             set { availability = value; }
         }
         public Car() { }
-        public Car(string carMake, string model, int year, int mileage, string availability)
+        public Car(int carOwnerId, string lisencePlate, string carMake, string model, int year, string mileage, string availability)
         {
+            this.carOwnerId = carOwnerId;
+            this.licensePlate = lisencePlate;
             this.carMake = carMake;
             this.model = model;
             this.year = year;
