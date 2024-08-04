@@ -41,7 +41,7 @@ static List<User> LoadUsersFromCSV(string usercsvFilePath)
     return users;
 }
 
-static List<Car> LoadCarsFromCSV(string carCsvFilePath)
+static List<Car> LoadCarsFromCSV(string carCsvFilePath, List<string> dates)
 {
     var cars = new List<Car>();
 
@@ -59,6 +59,8 @@ static List<Car> LoadCarsFromCSV(string carCsvFilePath)
         List<Booking> bookings = new List<Booking>(); //empty list of bookings 
 
         var car = new Car(ownerId, licensePlate, carMake, model, year, mileage, availability, insurance, bookings);
+
+        car.AvailableDates = new List<string>(dates);
 
         if (values.Length > 7)
         {
@@ -112,8 +114,8 @@ string insuranceCsvFilePath = "Insurance_list.csv";
 string datesCsvFilePath = "DateTimeSlots.csv";
 
 var users = LoadUsersFromCSV(usercsvFilePath);
-var cars = LoadCarsFromCSV(carCsvFilePath);
-LoadDateListFromCSV(datesCsvFilePath);
+var dates = LoadDateListFromCSV(datesCsvFilePath);
+var cars = LoadCarsFromCSV(carCsvFilePath, dates);
 
 // Login process
 Console.Write("Welcome! Please login below.");
@@ -394,6 +396,42 @@ if (user != null)
             foreach (var date in availableDates)
             {
                 Console.WriteLine(date);
+            }
+
+            while (true)
+            { 
+                Console.WriteLine();
+                Console.WriteLine("Do you want to filter the available time slots by selecting a specific month? ‘Y’ or ‘N’");
+                string filterChoice = Console.ReadLine().Trim().ToUpper();
+                Console.WriteLine();
+
+                if (filterChoice == "Y")
+                {
+                    Console.WriteLine("Enter the month (1-12) you want to filter:");
+                    if (int.TryParse(Console.ReadLine(), out int month) && month >= 1 && month <= 12)
+                    {
+                        var filteredDates = availableDates.Where(date => DateTime.TryParse(date, out DateTime dt) && dt.Month == month).ToList();
+
+                        Console.WriteLine($"Available dates for month {month}:");
+                        foreach (var date in filteredDates)
+                        {
+                            Console.WriteLine(date);
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid month. Please enter a number between 1 and 12.");
+                    }
+                }
+                else if (filterChoice == "N")
+                {
+                    Console.WriteLine("No filtering applied.");
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine("Invalid choice. Please enter 'Y' for yes or 'N' for no.");
+                }
             }
         }
 
