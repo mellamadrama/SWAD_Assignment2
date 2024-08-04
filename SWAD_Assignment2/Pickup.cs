@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SWAD_Assignment2
 {
-    internal class Pickup : PickupMethod
+    internal class Pickup : PickUpMethod
     {
         private DateTime dateTimePickup;
         private string pickupLocation;

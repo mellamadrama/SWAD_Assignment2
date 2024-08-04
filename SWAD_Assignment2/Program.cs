@@ -19,6 +19,8 @@ static List<User> LoadUsersFromCSV(string usercsvFilePath)
         DateTime dateOfBirth = DateTime.ParseExact(values[5].Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture);
         string role = values[values.Length - 1].Trim();
         int licence = values.Length > 6 && (role == "Car Owner" || role == "Renter") ? int.Parse(values[6].Trim()) : 0;
+        List<Car> cars = new List<Car>(); //temporary placeholder under assumption that all current car owners do not already have a list of cars registered
+        List<Booking> bookings = new List<Booking>(); //temporary placeholder under assumption that all current renters do not have existing bookings
         string licenseStatus = values.Length > 7 && role == "Renter" ? values[7].Trim() : null;
         int demeritPoints = values.Length > 8 && role == "Renter" ? int.Parse(values[8].Trim()) : 0;
 
@@ -28,10 +30,10 @@ static List<User> LoadUsersFromCSV(string usercsvFilePath)
                 users.Add(new iCar_Admin(id, fullName, contactNum, email, password, dateOfBirth));
                 break;
             case "Car Owner":
-                users.Add(new Car_Owner(id, fullName, contactNum, email, password, dateOfBirth, licence));
+                users.Add(new Car_Owner(id, fullName, contactNum, email, password, dateOfBirth, licence, cars));
                 break;
             case "Renter":
-                users.Add(new Renter(id, fullName, contactNum, email, password, dateOfBirth, licence, licenseStatus, demeritPoints));
+                users.Add(new Renter(id, fullName, contactNum, email, password, dateOfBirth, licence, licenseStatus, demeritPoints, bookings));
                 break;
         }
     }
@@ -53,24 +55,26 @@ static List<Car> LoadCarsFromCSV(string carCsvFilePath)
         int year = Convert.ToInt32(values[4].Trim());
         string mileage = values[5].Trim();
         string availability = values[6].Trim();
+        Insurance insurance = new Insurance(); //idk what this is for so this is just here to prevent the error
+        List<Booking> bookings = new List<Booking>(); //empty list of bookings 
 
-        cars.Add(new Car(ownerId, licensePlate, carMake, model, year, mileage, availability));
+        cars.Add(new Car(ownerId, licensePlate, carMake, model, year, mileage, availability, insurance, bookings));
     }
 
     return cars;
 }
 
 // not done
-static List<Insurance> LoadInsuranceFromCSV(string insuranceCsvFilePath)
-{
-    var insurance = new List<Car> ();
+//static List<Insurance> LoadInsuranceFromCSV(string insuranceCsvFilePath)
+//{
+//    var insurance = new List<Car> ();
 
-    foreach (var line in File.ReadLines (insuranceCsvFilePath))
-    {
-        var values = line.Split (",");
+//    foreach (var line in File.ReadLines (insuranceCsvFilePath))
+//    {
+//        var values = line.Split (",");
         
-    }
-}
+//    }
+//}
 
 string usercsvFilePath = "Users_Data.csv";
 string carCsvFilePath = "Car_List.csv";
