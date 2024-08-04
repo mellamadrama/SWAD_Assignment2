@@ -17,6 +17,8 @@ namespace SWAD_Assignment2
         private string availability;
         private Insurance insurance;
         private List<Booking> bookings;
+        private List<string> availableDates;
+        private List<string> unavailableDates;
         public int CarOwnerId
         {
             get { return carOwnerId; }
@@ -62,6 +64,17 @@ namespace SWAD_Assignment2
             get { return bookings; }
             set { bookings = value; }
         }
+        public List<string> AvailableDates
+        {
+            get { return availableDates; }
+            set { availableDates = value; }
+        }
+
+        public List<string> UnavailableDates
+        {
+            get { return unavailableDates; }
+            set { unavailableDates = value; }
+        }
         public Car() { }
         public Car(int carOwnerId, string carPlateNo, string carMake, string model, int year, string mileage, string availability, Insurance insurance, List<Booking> bookings)
         {
@@ -74,6 +87,8 @@ namespace SWAD_Assignment2
             this.availability = availability;
             this.insurance=insurance;
             this.bookings=bookings;
+            this.availableDates = new List<string>();
+            this.unavailableDates = new List<string>();
         }
     }
 }

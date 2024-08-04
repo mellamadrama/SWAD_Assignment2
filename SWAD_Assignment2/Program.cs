@@ -58,11 +58,40 @@ static List<Car> LoadCarsFromCSV(string carCsvFilePath)
         Insurance insurance = new Insurance(); //idk what this is for so this is just here to prevent the error
         List<Booking> bookings = new List<Booking>(); //empty list of bookings 
 
-        cars.Add(new Car(ownerId, licensePlate, carMake, model, year, mileage, availability, insurance, bookings));
+        var car = new Car(ownerId, licensePlate, carMake, model, year, mileage, availability, insurance, bookings);
+
+        if (values.Length > 7)
+        {
+            car.AvailableDates = values[7].Split(';').ToList();
+        }
+
+        if (values.Length > 8)
+        {
+            car.UnavailableDates = values[8].Split(';').ToList();
+        }
+
+        cars.Add(car);
     }
 
     return cars;
 }
+static List<string> LoadDateListFromCSV(string datesCsvFilePath)
+{
+    var dates = new List<string>();
+
+    foreach (var line in File.ReadLines(datesCsvFilePath).Skip(1))
+    {
+
+        var values = line.Split(',');
+        string date = values[0].Trim();
+        string time = values[1].Trim();
+
+        dates.Add($"{date} {time}");
+    }
+
+    return dates;
+}
+
 
 // not done
 //static List<Insurance> LoadInsuranceFromCSV(string insuranceCsvFilePath)
@@ -72,7 +101,7 @@ static List<Car> LoadCarsFromCSV(string carCsvFilePath)
 //    foreach (var line in File.ReadLines (insuranceCsvFilePath))
 //    {
 //        var values = line.Split (",");
-        
+
 //    }
 //}
 
@@ -80,9 +109,11 @@ string usercsvFilePath = "Users_Data.csv";
 string carCsvFilePath = "Car_List.csv";
 string icCsvFilePath = "Insurance_Company_List.csv";
 string insuranceCsvFilePath = "Insurance_list.csv";
+string datesCsvFilePath = "DateTimeSlots.csv";
 
 var users = LoadUsersFromCSV(usercsvFilePath);
 var cars = LoadCarsFromCSV(carCsvFilePath);
+LoadDateListFromCSV(datesCsvFilePath);
 
 // Login process
 Console.Write("Welcome! Please login below.");
@@ -355,6 +386,15 @@ if (user != null)
             Console.WriteLine();
             Console.WriteLine("Car Details:");
             Console.WriteLine($"{"License Plate:",-14} {selectedCar.LicensePlate,-9} {"Make:",-5} {selectedCar.CarMake,-15} {"Model:",-6} {selectedCar.Model,-9} {"Year:",-5} {selectedCar.Year,-6} {"Mileage:",-8} {selectedCar.Mileage,-14} {"Availability:",-13} {selectedCar.Availability}");
+
+            var availableDates = selectedCar.AvailableDates.Except(selectedCar.UnavailableDates).ToList();
+
+            Console.WriteLine();
+            Console.WriteLine("Available Dates:");
+            foreach (var date in availableDates)
+            {
+                Console.WriteLine(date);
+            }
         }
 
         static void ViewBookingHistory(Renter renter)
