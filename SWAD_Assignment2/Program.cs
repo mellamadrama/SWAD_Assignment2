@@ -282,7 +282,7 @@ void returnCar()
 // return to iCar Station
 void returnToiCarStation()
 {
-    Booking booking= getOngoingBooking((Renter) user);
+    Booking booking = getOngoingBooking((Renter)user);
     if (booking == null)
     {
         string message = "No ongoing bookings";
@@ -291,7 +291,23 @@ void returnToiCarStation()
     else
     {
         ReturnMethod returnMethod = booking.ReturnMethod;
-        //not done yet
+        if (returnMethod is not SelfReturn selfReturn)
+        {
+            string message = "Wrong return method. Returning to return car selection.";
+            display(message);
+            returnCar();
+        }
+        else
+        {
+            DateTime retDateTime = DateTime.Now;
+            selfReturn.DateTimeReturn = retDateTime;
+            DateTime endDate = booking.EndDate;
+            if (retDateTime > endDate)
+            {
+                float penaltyFee = calculatePenaltyFee(retDateTime, endDate);
+            }
+            //not done yet
+        }
     }
 }
 
@@ -308,6 +324,15 @@ Booking getOngoingBooking(Renter user)
         else continue;
     }
     return ongoingBooking;
+}
+
+//calculate penalty fee
+float calculatePenaltyFee(DateTime retDateTime, DateTime endDate)
+{
+    float penaltyFee = 0;
+    TimeSpan overTime = retDateTime - endDate;
+    //not done
+    return penaltyFee;
 }
 //return from desired location [empty]
 void returnFromDesiredLocation() { }

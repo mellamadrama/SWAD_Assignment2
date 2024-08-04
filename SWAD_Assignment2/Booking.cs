@@ -20,12 +20,12 @@ namespace SWAD_Assignment2
             get { return bookingId; }
             set { bookingId = value; }
         }
-        public DateTime StartTimeSlot
+        public DateTime StartDate
         {
             get { return startDate; }
             set { startDate = value; }
         }
-        public DateTime EndTimeSlot
+        public DateTime EndDate
         {
             get { return endDate; }
             set { endDate = value; }
@@ -51,11 +51,11 @@ namespace SWAD_Assignment2
             set { payment = value; }
         }
         public Booking() { }
-        public Booking(int bookingId, DateTime startTimeSlot, DateTime endTimeSlot, string status, PickUpMethod pickUpMethod, ReturnMethod returnMethod, Payment payment)
+        public Booking(int bookingId, DateTime startDate, DateTime endDate, string status, PickUpMethod pickUpMethod, ReturnMethod returnMethod, Payment payment)
         {
             this.bookingId = bookingId;
-            this.startDate = startTimeSlot;
-            this.endDate = endTimeSlot;
+            this.startDate = startDate;
+            this.endDate = endDate;
             this.status = status;
             this.pickUpMethod = pickUpMethod;
             this.returnMethod=returnMethod;
