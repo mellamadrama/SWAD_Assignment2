@@ -6,11 +6,12 @@ using System.Threading.Tasks;
 
 namespace SWAD_Assignment2
 {
-    internal class Insurance
+    internal class Insurance : Insurance_Company
     {
         private int carPlateNo;
         private int carOwnerId;
         private DateTime expiryDate;
+        private List<Insurance> insurance;
         public int CarPlateNo
         {
             get { return carPlateNo; }
@@ -26,12 +27,18 @@ namespace SWAD_Assignment2
             get { return expiryDate; }
             set { expiryDate = value; }
         }
-        public Insurance() { }
-        public Insurance(int carPlateNo, int carOwnerId, DateTime expiryDate)
+        public List<Insurance> Insurances
         {
-            this.carPlateNo=carPlateNo;
-            this.carOwnerId=carOwnerId;
-            this.expiryDate=expiryDate;
+            get { return insurance; }
+            set { insurance = value; }
+        }
+        public Insurance() { }
+        public Insurance(int branchNo, string companyName, string telephone, string address, string emailAddress, int carPlateNo, int carOwnerId, DateTime expiryDate, List<Insurance> insurance)
+            :base(branchNo, companyName, telephone, address, emailAddress)
+        {
+            this.carPlateNo = carPlateNo;
+            this.carOwnerId = carOwnerId;
+            this.expiryDate = expiryDate;
         }
     }
 }

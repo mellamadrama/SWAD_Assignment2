@@ -60,8 +60,22 @@ static List<Car> LoadCarsFromCSV(string carCsvFilePath)
     return cars;
 }
 
+// not done
+static List<Insurance> LoadInsuranceFromCSV(string insuranceCsvFilePath)
+{
+    var insurance = new List<Car> ();
+
+    foreach (var line in File.ReadLines (insuranceCsvFilePath))
+    {
+        var values = line.Split (",");
+        
+    }
+}
+
 string usercsvFilePath = "Users_Data.csv";
 string carCsvFilePath = "Car_List.csv";
+string icCsvFilePath = "Insurance_Company_List.csv";
+string insuranceCsvFilePath = "Insurance_list.csv";
 
 var users = LoadUsersFromCSV(usercsvFilePath);
 var cars = LoadCarsFromCSV(carCsvFilePath);
@@ -156,6 +170,100 @@ if (user != null)
         foreach (var car in ownerCars)
         {
             Console.WriteLine($"{"License Plate:",-14} {car.LicensePlate,-9} {"Make:",-5} {car.CarMake,-15} {"Model:",-6} {car.Model,-9} {"Year:",-5} {car.Year,-6} {"Mileage:",-8} {car.Mileage}");
+        }
+
+        while (true)
+        {
+            Console.WriteLine();
+            Console.WriteLine("1. Register Car");
+            Console.WriteLine("2. Exit");
+            Console.WriteLine("Choose an Option: ");
+
+            string choice = Console.ReadLine();
+
+            switch (choice)
+            {
+                case "1":
+                    RegisterCar(cars);
+                    break;
+                case "2":
+                    Console.WriteLine("Goodbye!");
+                    return;
+                default:
+                    Console.WriteLine("Invalid choice. Please try again.");
+                    break;
+            }
+        }
+
+        static void RegisterCar(List<Car> cars)
+        {
+            Console.WriteLine();
+
+            // prompt car owner for car details
+            Console.WriteLine("Please enter car details");
+
+            // Validate Car Make
+            string carMake;
+            while (true)
+            {
+                Console.WriteLine("Enter Car Make: ");
+                carMake = Console.ReadLine();
+                if (!string.IsNullOrWhiteSpace(carMake))
+                {
+                    break;
+                }
+                Console.WriteLine("Invalid input. Car Make cannot be empty.");
+            }
+            // Validate Car Model
+            string carModel;
+            while (true)
+            {
+                Console.WriteLine("Enter Car Model: ");
+                carModel = Console.ReadLine();
+                if (!string.IsNullOrWhiteSpace(carModel))
+                {
+                    break;
+                }
+                Console.WriteLine("Invalid input. Car Model cannot be empty.");
+            }
+            // Validate Car Mileage
+            int carMileage;
+            while (true)
+            {
+                Console.WriteLine("Enter Car Mileage: ");
+                string mileageInput = Console.ReadLine();
+                if (int.TryParse(mileageInput, out carMileage) && carMileage >= 0)
+                {
+                    break;
+                }
+                Console.WriteLine("Invalid input. Car Mileage must be a non-negative integer.");
+            }
+
+            // Validate Car Year
+            int year;
+            while (true)
+            {
+                Console.WriteLine("Enter Car Year: ");
+                string yearInput = Console.ReadLine();
+                if (int.TryParse(yearInput, out year) && year > 1885 && year <= DateTime.Now.Year)
+                {
+                    break;
+                }
+                Console.WriteLine($"Invalid input. Car Year must be between 1886 and {DateTime.Now.Year}.");
+            }
+
+            // Validate Car Plate Number
+            string carPlateNo;
+            while (true)
+            {
+                Console.WriteLine("Enter Car Plate Number: ");
+                carPlateNo = Console.ReadLine();
+                if (!string.IsNullOrWhiteSpace(carPlateNo))
+                {
+                    break;
+                }
+                Console.WriteLine("Invalid input. Car Plate Number cannot be empty.");
+            }
         }
     }
     else if (user is Renter renter)
