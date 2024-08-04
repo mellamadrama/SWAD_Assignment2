@@ -253,3 +253,61 @@ else
 {
     Console.WriteLine("Too many failed attempts. System will exit.");
 }
+
+//display method
+void display(string message)
+{
+    Console.WriteLine(message);
+}
+
+//return car
+void returnCar()
+{
+    Console.WriteLine("Select: \n[1] Return to iCar Station \n[2] Return from Desired Location");
+    string option = Console.ReadLine();
+    if (option == "1")
+    {
+        returnToiCarStation();
+    }
+    else if (option == "2")
+    {
+        returnFromDesiredLocation();
+    }
+    else
+    {
+        Console.WriteLine("Not a valid option. Returning to Main Screen.");
+    }
+}
+
+// return to iCar Station
+void returnToiCarStation()
+{
+    Booking booking= getOngoingBooking((Renter) user);
+    if (booking == null)
+    {
+        string message = "No ongoing bookings";
+        display(message);
+    }
+    else
+    {
+        ReturnMethod returnMethod = booking.ReturnMethod;
+        //not done yet
+    }
+}
+
+// get ongoing bookings
+Booking getOngoingBooking(Renter user)
+{
+    Booking ongoingBooking = null;
+    foreach (Booking booking in user.Bookings)
+    {
+        if (booking.PickUpMethod != null)
+        {
+            ongoingBooking = booking;
+        }
+        else continue;
+    }
+    return ongoingBooking;
+}
+//return from desired location [empty]
+void returnFromDesiredLocation() { }
