@@ -8,7 +8,7 @@ static List<User> LoadUsersFromCSV(string usercsvFilePath)
 {
     var users = new List<User>();
 
-    foreach (var line in File.ReadLines(usercsvFilePath))
+    foreach (var line in File.ReadLines(usercsvFilePath).Skip(1))
     {
         var values = line.Split(',');
         int id = Convert.ToInt32(values[0].Trim());
@@ -45,7 +45,7 @@ static List<Car> LoadCarsFromCSV(string carCsvFilePath)
 {
     var cars = new List<Car>();
 
-    foreach (var line in File.ReadLines(carCsvFilePath))
+    foreach (var line in File.ReadLines(carCsvFilePath).Skip(1))
     {
         var values = line.Split(',');
         int ownerId = Convert.ToInt32(values[0].Trim());
@@ -334,16 +334,23 @@ if (user != null)
 
             string bookingInput = string.Empty;
 
-            while (!string.Equals(bookingInput, "Make Booking", StringComparison.OrdinalIgnoreCase))
+            while (true)
             {
-                Console.WriteLine("Enter 'Make Booking' to start the booking: ");
+                Console.WriteLine();
+                Console.WriteLine("Press Enter to start the booking: ");
                 bookingInput = Console.ReadLine();
 
-                if (!string.Equals(bookingInput, "Make Booking", StringComparison.OrdinalIgnoreCase))
+                if (string.IsNullOrEmpty(bookingInput))
                 {
-                    Console.WriteLine("Invalid input. Please enter 'Make Booking' exactly as instructed.");
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("Invalid input. Please press Enter to start the booking.");
                 }
             }
+
 
             Console.WriteLine();
             Console.WriteLine("Car Details:");
