@@ -8,7 +8,7 @@ namespace SWAD_Assignment2
 {
     internal class Booking
     {
-        private int bookingId;
+        private string bookingId;
         private DateTime startDate;
         private DateTime endDate;
         private string status;
@@ -16,7 +16,7 @@ namespace SWAD_Assignment2
         private ReturnMethod returnMethod;
         private Payment payment;
         private Car car;
-        public int BookingId
+        public string BookingId
         {
             get { return bookingId; }
             set { bookingId = value; }
@@ -57,7 +57,7 @@ namespace SWAD_Assignment2
             set { car = value; }
         }
         public Booking() { }
-        public Booking(int bookingId, DateTime startDate, DateTime endDate, string status, PickUpMethod pickUpMethod, ReturnMethod returnMethod, Payment payment, Car car)
+        public Booking(string bookingId, DateTime startDate, DateTime endDate, string status, PickUpMethod pickUpMethod, ReturnMethod returnMethod, Payment payment, Car car)
         {
             this.bookingId = bookingId;
             this.startDate = startDate;

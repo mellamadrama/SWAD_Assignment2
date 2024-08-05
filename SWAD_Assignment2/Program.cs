@@ -193,12 +193,31 @@ List<string> carMakes = new List<string>
     "volvo","tesla","ferrari","lamborghini","bentley","rolls-royce","maserati","aston martin","alfa romeo","peugeot","renault","citroën","fiat"
 };
 
+static List<string> ReadLocationsFromCsv(string filePath)
+{
+    var locations = new List<string>();
+    using (var reader = new StreamReader(filePath))
+    {
+        reader.ReadLine(); // Skip the header line
+        while (!reader.EndOfStream)
+        {
+            var line = reader.ReadLine();
+            if (!string.IsNullOrEmpty(line))
+            {
+                locations.Add(line);
+            }
+        }
+    }
+    return locations;
+}
+
 string usercsvFilePath = "Users_Data.csv";
 string carCsvFilePath = "Car_List.csv";
 string icCsvFilePath = "Insurance_Company_List.csv";
 string insuranceCsvFilePath = "Insurance_list.csv";
 string datesCsvFilePath = "DateTimeSlots.csv";
 string paymenthMethodFilePath = "PaymentMethods.csv";
+string locationsCsvFilePath = "iCar_Locations.csv";
 
 var users = LoadUsersFromCSV(usercsvFilePath);
 var dates = LoadDateListFromCSV(datesCsvFilePath);
@@ -206,6 +225,7 @@ var companyDictionary = LoadCompanyDictionary(icCsvFilePath);
 var insuranceList = LoadInsuranceFromCSV(insuranceCsvFilePath, companyDictionary);
 var paymentMethods = LoadPaymentMethodsFromCSV(paymenthMethodFilePath);
 var cars = LoadCarsFromCSV(carCsvFilePath, dates, insuranceList);
+var locations = ReadLocationsFromCsv(locationsCsvFilePath);
 
 // Login process
 Console.Write("========Welcome! Please login below.========");
@@ -745,8 +765,171 @@ if (user != null)
                         availableDates.RemoveRange(startIndex, endIndex - startIndex + 1);
                     }
 
+                    Console.WriteLine();
+                    Console.WriteLine("Do you want to pick up the car yourself or have it delivered? Enter 'P' for pickup or 'D' for delivery: ");
+                    string pickupOrDelivery = Console.ReadLine().Trim().ToUpper();
 
-                    break;
+                    PickUpMethod pickUpMethod = null;
+
+                    if (pickupOrDelivery == "P")
+                    {
+                        Pickup pickup = new Pickup
+                        {
+                            DateTimePickup = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null)
+                        };
+
+                        var locations = ReadLocationsFromCsv("locations.csv");
+
+                        Console.WriteLine("List of Pickup Locations:");
+                        for (int i = 0; i < locations.Count; i++)
+                        {
+                            Console.WriteLine($"{i + 1}. {locations[i]}");
+                        }
+
+                        while (true)
+                        {
+                            Console.WriteLine("Enter the number of the location where you want to pick up the car: ");
+                            if (int.TryParse(Console.ReadLine(), out int locationIndex) && locationIndex >= 1 && locationIndex <= locations.Count)
+                            {
+                                pickup.PickupLocation = locations[locationIndex - 1];
+                                pickUpMethod = pickup;
+                                break;
+                            }
+                            else
+                            {
+                                Console.WriteLine("Invalid location number. Please try again.");
+                            }
+                        }
+
+                    }
+                    else if (pickupOrDelivery == "D")
+                    {
+                        DeliverCar delivery = new DeliverCar
+                        {
+                            DateTimeDeliver = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null)
+                        };
+
+                        while (true)
+                        {
+                            Console.WriteLine("Enter the delivery location in this format: Postal Code, Address, Country: ");
+                            string deliveryLocation = Console.ReadLine();
+
+                            string[] parts = deliveryLocation.Split(',');
+                            if (parts.Length == 3 && parts[2].Trim().Equals("Singapore", StringComparison.OrdinalIgnoreCase))
+                            {
+                                delivery.DeliveryLocation = deliveryLocation;
+                                pickUpMethod = delivery;
+                                break;
+                            }
+                            else
+                            {
+                                Console.WriteLine("Invalid location. Ensure the country is 'Singapore'. Please try again.");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid choice. Please enter 'P' for pickup or 'D' for delivery.");
+                        return;
+                    }
+
+                    Console.WriteLine();
+                    Console.WriteLine("Do you want to return the car yourself or have it picked up? Enter 'S' for self-return or 'D' for delivery return: ");
+                    string returnMethodChoice = Console.ReadLine().Trim().ToUpper();
+
+                    ReturnMethod returnMethod = null;
+
+                    if (returnMethodChoice == "S")
+                    {
+                        SelfReturn selfReturn = new SelfReturn
+                        {
+                            DateTimeReturn = DateTime.ParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null)
+                        };
+
+                        Console.WriteLine("Please select a return location:");
+
+                        var locations = ReadLocationsFromCsv("locations.csv");
+
+                        for (int i = 0; i < locations.Count; i++)
+                        {
+                            Console.WriteLine($"{i + 1}. {locations[i]}");
+                        }
+
+                        while (true)
+                        {
+                            Console.WriteLine("Enter the number of the location where you want to return the car: ");
+                            if (int.TryParse(Console.ReadLine(), out int locationIndex) && locationIndex >= 1 && locationIndex <= locations.Count)
+                            {
+                                selfReturn.ICarReturnLocation = locations[locationIndex - 1];
+                                returnMethod = selfReturn;
+                                break;
+                            }
+                            else
+                            {
+                                Console.WriteLine("Invalid location number. Please try again.");
+                            }
+                        }
+                    }
+                    else if (returnMethodChoice == "D")
+                    {
+                        DeliveryReturn deliveryReturn = new DeliveryReturn
+                        {
+                            DateTimeReturnDelivery = DateTime.ParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null),
+                            AdditionalCharge = new AdditionalCharge() // Set any additional charges if applicable
+                        };
+
+                        while (true)
+                        {
+                            Console.WriteLine("Enter the return delivery location in this format: Postal Code, Address, Country: ");
+                            string returnLocation = Console.ReadLine();
+
+                            string[] parts = returnLocation.Split(',');
+                            if (parts.Length == 3 && parts[2].Trim().Equals("Singapore", StringComparison.OrdinalIgnoreCase))
+                            {
+                                deliveryReturn.ReturnLocation = returnLocation;
+                                returnMethod = deliveryReturn;
+                                break;
+                            }
+                            else
+                            {
+                                Console.WriteLine("Invalid location. Ensure the country is 'Singapore'. Please try again.");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid choice. Please enter 'S' for self-return or 'D' for delivery return.");
+                        return;
+                    }
+
+                    // Process the booking with the selected pickup and return methods
+                    Booking booking = new Booking
+                    {
+                        BookingId = Guid.NewGuid().ToString(),
+                        StartDate = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null),
+                        EndDate = DateTime.ParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null),
+                        Status = "Confirmed",
+                        PickUpMethod = pickUpMethod,
+                        ReturnMethod = returnMethod,
+                        Payment = new Payment(), // Initialize the payment details as needed
+                        Car = selectedCar
+                    };
+
+                    Console.WriteLine("Booking successfully created!");
+                    Console.WriteLine($"Booking ID: {booking.BookingId}");
+                    Console.WriteLine($"Start Date: {booking.StartDate}");
+                    Console.WriteLine($"End Date: {booking.EndDate}");
+                    Console.WriteLine($"Pickup Method: {pickUpMethod}");
+                    Console.WriteLine($"Return Method: {returnMethod}");
+
+                    Console.WriteLine();
+                    Console.WriteLine("Car Details:");
+                    Console.WriteLine($"{"License Plate:",-14} {selectedCar.LicensePlate,-9}");
+                    Console.WriteLine($"{"Make:",-14} {selectedCar.CarMake,-9}");
+                    Console.WriteLine($"{"Model:",-14} {selectedCar.Model,-9}");
+                    Console.WriteLine($"{"Year:",-14} {selectedCar.Year,-9}");
+                    Console.WriteLine($"{"Mileage:",-14} {selectedCar.Mileage,-9}");
+                    Console.WriteLine($"{"Availability:",-14} {selectedCar.Availability,-9}");
                 }
                 else
                 {
