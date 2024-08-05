@@ -9,7 +9,7 @@ namespace SWAD_Assignment2
     internal class Payment
     {
         private DateTime date;
-        private int totalFee;
+        private double totalFee;
         public AdditionalCharge AdditionalCharge { get; set; }
         public List<PaymentMethod> PaymentMethods { get; set; }
 
@@ -19,7 +19,7 @@ namespace SWAD_Assignment2
             set { date = value; }
         }
 
-        public int TotalFee
+        public double TotalFee
         {
             get { return totalFee; }
             set { totalFee = value; }
@@ -30,7 +30,7 @@ namespace SWAD_Assignment2
             PaymentMethods = new List<PaymentMethod>();
         }
 
-        public Payment(DateTime date, int totalFee, AdditionalCharge additionalCharge, List<PaymentMethod> paymentMethods)
+        public Payment(DateTime date, double totalFee, AdditionalCharge additionalCharge, List<PaymentMethod> paymentMethods)
         {
             this.date = date;
             this.totalFee = totalFee;
