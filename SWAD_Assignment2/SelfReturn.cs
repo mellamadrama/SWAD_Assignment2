@@ -10,7 +10,6 @@ namespace SWAD_Assignment2
     {
         private DateTime dateTimeReturn;
         private string iCarReturnLocation;
-        private AdditionalCharge additionalCharge;
         public DateTime DateTimeReturn
         {
             get { return dateTimeReturn; }
@@ -21,17 +20,11 @@ namespace SWAD_Assignment2
             get { return iCarReturnLocation; }
             set { iCarReturnLocation = value; }
         }
-        public AdditionalCharge AdditionalCharge
-        {
-            get { return additionalCharge; }
-            set { additionalCharge = value; }
-        }
-        public SelfReturn() { }
-        public SelfReturn(DateTime dateTimeReturn, string iCarReturnLocation, AdditionalCharge additionalCharge)
+        public SelfReturn() : base(){ }
+        public SelfReturn(DateTime dateTimeReturn, string iCarReturnLocation, AdditionalCharge additionalCharge) : base(additionalCharge)
         {
             this.dateTimeReturn = dateTimeReturn;
             this.iCarReturnLocation = iCarReturnLocation;
-            AdditionalCharge=additionalCharge;
         }
     }
 }

@@ -29,10 +29,9 @@ namespace SWAD_Assignment2
             get { return returnDeliveryFee; }
             set { returnDeliveryFee = value; }
         }
+        public DeliveryReturn() : base() { }
 
-        public DeliveryReturn() { }
-
-        public DeliveryReturn(DateTime dateTimeReturnDelivery, string returnLocation, double returnDeliveryFee)
+        public DeliveryReturn(DateTime dateTimeReturnDelivery, string returnLocation, double returnDeliveryFee, AdditionalCharge additionalCharges) : base(additionalCharges)
         {
             this.dateTimeReturnDelivery = dateTimeReturnDelivery;
             this.returnLocation = returnLocation;

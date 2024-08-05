@@ -8,11 +8,10 @@ namespace SWAD_Assignment2
 {
     internal class Insurance : Insurance_Company
     {
-        private int carPlateNo;
+        private string carPlateNo;
         private int carOwnerId;
         private DateTime expiryDate;
-        private List<Insurance> insurance;
-        public int CarPlateNo
+        public string CarPlateNo
         {
             get { return carPlateNo; }
             set { carPlateNo = value; }
@@ -27,13 +26,8 @@ namespace SWAD_Assignment2
             get { return expiryDate; }
             set { expiryDate = value; }
         }
-        public List<Insurance> Insurances
-        {
-            get { return insurance; }
-            set { insurance = value; }
-        }
         public Insurance() { }
-        public Insurance(int branchNo, string companyName, string telephone, string address, string emailAddress, int carPlateNo, int carOwnerId, DateTime expiryDate, List<Insurance> insurance)
+        public Insurance(int branchNo, string companyName, string telephone, string address, string emailAddress, string carPlateNo, int carOwnerId, DateTime expiryDate)
             :base(branchNo, companyName, telephone, address, emailAddress)
         {
             this.carPlateNo = carPlateNo;

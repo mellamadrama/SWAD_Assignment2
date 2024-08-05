@@ -13,7 +13,6 @@ namespace SWAD_Assignment2
         private string telephone;
         private string address;
         private string emailAddress;
-        private List<Insurance> insurance;
 
         public int BranchNo 
         { 
