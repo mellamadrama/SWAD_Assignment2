@@ -399,7 +399,7 @@ if (user != null)
             }
 
             while (true)
-            { 
+            {
                 Console.WriteLine();
                 Console.WriteLine("Do you want to filter the available time slots by selecting a specific month? ‘Y’ or ‘N’");
                 string filterChoice = Console.ReadLine().Trim().ToUpper();
@@ -425,7 +425,61 @@ if (user != null)
                 }
                 else if (filterChoice == "N")
                 {
-                    Console.WriteLine("No filtering applied.");
+                    string startDateTime = "";
+                    string endDateTime = "";
+
+                    while (true)
+                    {
+                        Console.WriteLine("Please enter the start date and time slot for your booking (yyyy-MM-dd, hh:mm tt): ");
+                        startDateTime = Console.ReadLine();
+
+                        if (availableDates.Contains(startDateTime) && !selectedCar.UnavailableDates.Contains(startDateTime))
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            Console.WriteLine("Invalid start date and time or it is unavailable. Please try again.");
+                        }
+                    }
+
+                    while (true)
+                    {
+                        Console.WriteLine("Please enter the end date and time slot for your booking (yyyy-MM-dd hh:mm tt): ");
+                        endDateTime = Console.ReadLine();
+
+                        if (availableDates.Contains(endDateTime) && !selectedCar.UnavailableDates.Contains(endDateTime))
+                        {
+                            DateTime startDate = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null);
+                            DateTime endDate = DateTime.ParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null);
+
+                            if (endDate > startDate)
+                            {
+                                break;
+                            }
+                            else
+                            {
+                                Console.WriteLine("End date and time must be after the start date and time. Please try again.");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Invalid end date and time or it is unavailable. Please try again.");
+                        }
+                    }
+
+                    var bookingDates = availableDates
+                        .Where(date => string.Compare(date, startDateTime) >= 0 && string.Compare(date, endDateTime) <= 0)
+                        .ToList();
+
+                    selectedCar.UnavailableDates.AddRange(bookingDates);
+
+                    Console.WriteLine("Booking confirmed for the following dates and times:");
+                    foreach (var date in bookingDates)
+                    {
+                        Console.WriteLine(date);
+                    }
+
                     break;
                 }
                 else
