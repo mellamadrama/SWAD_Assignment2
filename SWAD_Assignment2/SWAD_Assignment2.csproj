@@ -14,6 +14,12 @@
     <None Update="DateTimeSlots.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Insurance_Company_List.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Insurance_List.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Users_Data.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

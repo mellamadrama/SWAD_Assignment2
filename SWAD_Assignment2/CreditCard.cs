@@ -21,3 +21,4 @@ namespace SWAD_Assignment2
             Bank = bank;
         }
     }
+}
