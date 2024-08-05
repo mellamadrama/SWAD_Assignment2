@@ -103,7 +103,7 @@ static List<Car> LoadCarsFromCSV(string carCsvFilePath, List<string> dates, List
         string carMake = values[2].Trim();
         string model = values[3].Trim();
         int year = Convert.ToInt32(values[4].Trim());
-        string mileage = values[5].Trim();
+        int mileage = Convert.ToInt32(values[5].Trim());
         string availability = values[6].Trim();
         string status = values[7].Trim();
 
@@ -162,7 +162,7 @@ var users = LoadUsersFromCSV(usercsvFilePath);
 var dates = LoadDateListFromCSV(datesCsvFilePath);
 var companyDictionary = LoadCompanyDictionary(icCsvFilePath);
 var insuranceList = LoadInsuranceFromCSV(insuranceCsvFilePath, companyDictionary);
-var cars = LoadCarsFromCSV(carCsvFilePath, dates);
+var cars = LoadCarsFromCSV(carCsvFilePath, dates, insuranceList);
 
 // Login process
 Console.Write("Welcome! Please login below.");
@@ -446,7 +446,7 @@ if (user != null)
                     };
                     cars.Add(newCar);
 
-                    Console.WriteLine("Car Successfully Registered!")
+                    Console.WriteLine("Car Successfully Registered!");
                     break;
                 }
                 else if (response == "no")
@@ -459,9 +459,6 @@ if (user != null)
                     Console.WriteLine("Invalid input. Please type 'yes' or 'no'.");
                 }
             }           
-
-            // Check if car plate number exists in the insuranceList
-            string insuranceStatus = insuranceList.Any(i => i.CarPlateNo == carPlateNo) ? "Y" : "X";
         }
     }
     else if (user is Renter renter)
