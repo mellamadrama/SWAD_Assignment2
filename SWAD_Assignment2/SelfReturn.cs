@@ -31,7 +31,7 @@ namespace SWAD_Assignment2
         {
             this.dateTimeReturn = dateTimeReturn;
             this.iCarReturnLocation = iCarReturnLocation;
-            AdditionalCharge=additionalCharge;
+            this.additionalCharge = additionalCharge;
         }
     }
 }

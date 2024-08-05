@@ -11,6 +11,7 @@ namespace SWAD_Assignment2
         private DateTime dateTimeReturnDelivery;
         private string returnLocation;
         private double returnDeliveryFee;
+        private AdditionalCharge additionalCharges;
 
         public DateTime DateTimeReturnDelivery
         {
@@ -29,14 +30,19 @@ namespace SWAD_Assignment2
             get { return returnDeliveryFee; }
             set { returnDeliveryFee = value; }
         }
-
+        public AdditionalCharge AdditionalCharges 
+        { 
+            get { return additionalCharges; }
+            set { additionalCharges = value; }
+        }
         public DeliveryReturn() { }
 
-        public DeliveryReturn(DateTime dateTimeReturnDelivery, string returnLocation, double returnDeliveryFee)
+        public DeliveryReturn(DateTime dateTimeReturnDelivery, string returnLocation, double returnDeliveryFee, AdditionalCharge additionalCharges)
         {
             this.dateTimeReturnDelivery = dateTimeReturnDelivery;
             this.returnLocation = returnLocation;
             this.returnDeliveryFee = returnDeliveryFee;
+            this.additionalCharges=additionalCharges;
         }
     }
 

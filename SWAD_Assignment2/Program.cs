@@ -533,33 +533,22 @@ void returnCar()
 // return to iCar Station
 void returnToiCarStation()
 {
+    double totalReturnFee = 0;
     Booking booking = getOngoingBooking((Renter)user);
-    if (booking == null)
+    SelfReturn returnMethod = (SelfReturn) booking.ReturnMethod;
+    DateTime retDateTime = DateTime.Now;
+    returnMethod.DateTimeReturn = retDateTime;
+    DateTime endDate = booking.EndDate;
+    if (retDateTime > endDate)
     {
-        string message = "No ongoing bookings";
-        display(message);
+        double penaltyFee = calculatePenaltyFee(retDateTime, endDate, booking);
+        totalReturnFee += penaltyFee;
+        booking.updatePenaltyFee(penaltyFee);
+        string message = "Penalty Fee for late return: " + penaltyFee;
     }
-    else
-    {
-        ReturnMethod returnMethod = booking.ReturnMethod;
-        if (returnMethod is not SelfReturn selfReturn)
-        {
-            string message = "Wrong return method. Returning to return car selection.";
-            display(message);
-            returnCar();
-        }
-        else
-        {
-            DateTime retDateTime = DateTime.Now;
-            selfReturn.DateTimeReturn = retDateTime;
-            DateTime endDate = booking.EndDate;
-            if (retDateTime > endDate)
-            {
-                float penaltyFee = calculatePenaltyFee(retDateTime, endDate);
-            }
-            //not done yet
-        }
-    }
+    promptCheckForDamages();
+    //not done yet
+    
 }
 
 // get ongoing bookings
@@ -578,12 +567,19 @@ Booking getOngoingBooking(Renter user)
 }
 
 //calculate penalty fee
-float calculatePenaltyFee(DateTime retDateTime, DateTime endDate)
+double calculatePenaltyFee(DateTime retDateTime, DateTime endDate, Booking ongoingBooking)
 {
-    float penaltyFee = 0;
+    double penaltyFee = 0;
     TimeSpan overTime = retDateTime - endDate;
-    //not done
+    double totalFee = ongoingBooking.Payment.TotalFee; //get current total cost of booking
+    penaltyFee = totalFee * 0.20 * overTime.Hours;
     return penaltyFee;
 }
+
+void promptCheckForDamages()
+{
+    Console.WriteLine("Please check for damages. If there are damages, enter ");
+}
+
 //return from desired location [empty]
 void returnFromDesiredLocation() { }

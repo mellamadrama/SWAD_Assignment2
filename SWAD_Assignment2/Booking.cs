@@ -61,5 +61,11 @@ namespace SWAD_Assignment2
             this.returnMethod=returnMethod;
             this.payment=payment;
         }
+
+        public void updatePenaltyFee(double penaltyFee)
+        {
+            SelfReturn selfReturn = (SelfReturn)returnMethod;
+            selfReturn.AdditionalCharge.PenaltyFee = penaltyFee;
+        }
     }
 }
