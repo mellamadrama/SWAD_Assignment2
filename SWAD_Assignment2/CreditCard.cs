@@ -22,5 +22,11 @@ namespace SWAD_Assignment2
             Balance = balance;
             Bank = bank;
         }
+
+        public override void DeductBalance(double amount)
+        {
+            Balance -= amount;
+            Console.WriteLine("Payment successful! New balance: SGD" +  Balance);
+        }
     }
 }

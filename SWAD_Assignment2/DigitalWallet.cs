@@ -8,15 +8,22 @@ namespace SWAD_Assignment2
 {
     internal class DigitalWallet : PaymentMethod
     {
+        public string Name { get; set; }
         public string Type { get; set; }
         public double Balance { get; set; }
 
         public DigitalWallet() { }
 
-        public DigitalWallet(string type, double balance)
+        public DigitalWallet(string name, string type, double balance)
         {
+            Name = name;
             Type = type;
             Balance = balance;
+        }
+        public override void DeductBalance(double amount)
+        {
+            Balance -= amount;
+            Console.WriteLine("Payment successful! New balance: SGD" + Balance);
         }
     }
 }

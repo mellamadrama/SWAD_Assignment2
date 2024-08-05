@@ -8,5 +8,6 @@ namespace SWAD_Assignment2
 {
     internal abstract class PaymentMethod
     {
+        public abstract void DeductBalance(double amount);
     }
 }
