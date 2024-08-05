@@ -121,14 +121,14 @@ static List<Car> LoadCarsFromCSV(string carCsvFilePath, List<string> dates, List
 
         car.AvailableDates = new List<string>(dates);
 
-        if (values.Length > 7)
-        {
-            car.AvailableDates = values[7].Split(';').ToList();
-        }
-
         if (values.Length > 8)
         {
-            car.UnavailableDates = values[8].Split(';').ToList();
+            car.AvailableDates = values[8].Split(';').ToList();
+        }
+
+        if (values.Length > 9)
+        {
+            car.UnavailableDates = values[9].Split(';').ToList();
         }
 
         cars.Add(car);
@@ -152,6 +152,22 @@ static List<string> LoadDateListFromCSV(string datesCsvFilePath)
     }
 
     return dates;
+}
+
+static List<string> ReadLocationsFromCsv(string locationsCsvFilePath)
+{
+    var locations = new List<string>();
+
+    foreach (var line in File.ReadLines(locationsCsvFilePath).Skip(1))
+    {
+        var values = (line.Split(",")).ToList();
+        string code = values[0].Trim();
+        string add = values[1].Trim();
+        string country = values[2].Trim();
+
+        locations.Add($"{code} {add} {country}");
+    }
+    return locations;
 }
 
 static List<PaymentMethod> LoadPaymentMethodsFromCSV(string paymentMethodFilePath)
@@ -192,24 +208,6 @@ List<string> carMakes = new List<string>
     "toyota","honda","ford","chevrolet","nissan","bmw","mercedes-benz","volkswagen","audi","hyundai","kia","mazda","subaru","lexus","jaguar","porsche","land rover",
     "volvo","tesla","ferrari","lamborghini","bentley","rolls-royce","maserati","aston martin","alfa romeo","peugeot","renault","citroën","fiat"
 };
-
-static List<string> ReadLocationsFromCsv(string filePath)
-{
-    var locations = new List<string>();
-    using (var reader = new StreamReader(filePath))
-    {
-        reader.ReadLine(); // Skip the header line
-        while (!reader.EndOfStream)
-        {
-            var line = reader.ReadLine();
-            if (!string.IsNullOrEmpty(line))
-            {
-                locations.Add(line);
-            }
-        }
-    }
-    return locations;
-}
 
 string usercsvFilePath = "Users_Data.csv";
 string carCsvFilePath = "Car_List.csv";
