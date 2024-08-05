@@ -152,16 +152,51 @@ static List<string> LoadDateListFromCSV(string datesCsvFilePath)
     return dates;
 }
 
+static List<PaymentMethod> LoadPaymentMethodsFromCSV(string paymentMethodFilePath)
+{
+    var paymentMethods = new List<PaymentMethod>();
+
+    foreach (var line in File.ReadLines(paymentMethodFilePath).Skip(1))
+    {
+        var values = line.Split(',');
+
+        string paymentMethodType = values[0].Trim();
+        string cardNum = values[1].Trim();
+        string name = values[2].Trim();
+        double balance = Convert.ToDouble(values[3].Trim());
+
+        string bank = values[4].Trim();
+
+        switch (paymentMethodType)
+        {
+            case "DebitCard":
+                paymentMethods.Add(new DebitCard(cardNum, name, balance, bank));
+                break;
+            case "DigitalWallet":
+                paymentMethods.Add(new DigitalWallet(bank, balance));
+                break;
+            case "CreditCard":
+                paymentMethods.Add(new CreditCard(cardNum, name, balance, bank);
+                break;
+        }
+    }
+
+    return paymentMethods;
+}
+
+
 string usercsvFilePath = "Users_Data.csv";
 string carCsvFilePath = "Car_List.csv";
 string icCsvFilePath = "Insurance_Company_List.csv";
 string insuranceCsvFilePath = "Insurance_list.csv";
 string datesCsvFilePath = "DateTimeSlots.csv";
+string paymenthMethodFilePath = "PaymentMethods.csv";
 
 var users = LoadUsersFromCSV(usercsvFilePath);
 var dates = LoadDateListFromCSV(datesCsvFilePath);
 var companyDictionary = LoadCompanyDictionary(icCsvFilePath);
 var insuranceList = LoadInsuranceFromCSV(insuranceCsvFilePath, companyDictionary);
+var paymentMethods = LoadPaymentMethodsFromCSV(paymenthMethodFilePath);
 var cars = LoadCarsFromCSV(carCsvFilePath, dates);
 
 // Login process
@@ -781,6 +816,7 @@ void MakePayment() {
     Booking booking = getOngoingBooking((Renter)user);
 
     displayBooking(booking);
+    string name = user.FullName;
 
     Console.WriteLine("Confirm payment amount? (yes/no) ");
     string res = Console.ReadLine();
@@ -791,55 +827,130 @@ void MakePayment() {
         return;
     }
 
-    Console.WriteLine("Proceed with payment");
+    PaymentMethod selectedPaymentMethod = null;
 
-    Console.WriteLine("Select Payment Method: ");
-    Console.WriteLine("1. Digital Wallet");
-    Console.WriteLine("2. Debit Card");
-    Console.WriteLine("3. Credit Card");
-
-    string paymentMethod = Console.ReadLine();
-
-    while (paymentMethod != "1" && paymentMethod != "2" && paymentMethod != "3")
+    while (selectedPaymentMethod == null)
     {
+        Console.WriteLine("Proceed with payment");
+
         Console.WriteLine("Select Payment Method: ");
         Console.WriteLine("1. Digital Wallet");
         Console.WriteLine("2. Debit Card");
         Console.WriteLine("3. Credit Card");
 
-        paymentMethod = Console.ReadLine();
+        string method = Console.ReadLine();
 
-        if (paymentMethod != "1" && paymentMethod != "2" && paymentMethod != "3")
+        while (method != "1" && method != "2" && method != "3")
         {
-            Console.WriteLine("Invalid input! Please try again.");
+            Console.WriteLine("Select Payment Method: ");
+            Console.WriteLine("1. Digital Wallet");
+            Console.WriteLine("2. Debit Card");
+            Console.WriteLine("3. Credit Card");
+
+            method = Console.ReadLine();
+
+            if (method != "1" && method != "2" && method != "3")
+            {
+                Console.WriteLine("Invalid input! Please try again.");
+            }
+        }
+
+        if (method == "1")
+        {
+            Console.WriteLine("Enter wallet type:");
+            string walletType = Console.ReadLine();
+            selectedPaymentMethod = paymentMethods
+                .OfType<DigitalWallet>()
+                .FirstOrDefault(dw => dw.Type == walletType);
+
+            if (selectedPaymentMethod == null)
+            {
+                Console.WriteLine("No matching Digital Wallet found. Please try again.");
+            }
+        }
+        else if (method == "2")
+        {
+            string cardNum;
+            do
+            {
+                Console.WriteLine("Enter card number: ");
+                cardNum = Console.ReadLine();
+                if (cardNum.Length != 16)
+                {
+                    Console.WriteLine("Invalid card number! It must be 16 digits.");
+                }
+            } while (cardNum.Length != 16);
+
+            selectedPaymentMethod = paymentMethods
+                .OfType<DebitCard>()
+                .FirstOrDefault(dc => dc.CardNum == cardNum);
+
+            if (selectedPaymentMethod == null)
+            {
+                Console.WriteLine("No matching Debit Card found. Please try again.");
+                continue; 
+            }
+
+            var debitCard = (DebitCard)selectedPaymentMethod;
+            string cardName;
+            do
+            {
+                Console.WriteLine("Enter card name: ");
+                cardName = Console.ReadLine();
+                if (cardName != name)
+                {
+                    Console.WriteLine("Card name does not match user's name!");
+                }
+            } while (cardName != name);
+            debitCard.CardName = cardName;
+
+            Console.WriteLine("Enter bank: ");
+            debitCard.Bank = Console.ReadLine();
+        }
+        else if (method == "3")
+        {
+            string cardNum;
+            do
+            {
+                Console.WriteLine("Enter card number: ");
+                cardNum = Console.ReadLine();
+                if (cardNum.Length != 16 || !long.TryParse(cardNum, out _))
+                {
+                    Console.WriteLine("Invalid card number! It must be 16 digits.");
+                }
+            } while (cardNum.Length != 16 || !long.TryParse(cardNum, out _));
+
+            selectedPaymentMethod = paymentMethods
+                .OfType<CreditCard>()
+                .FirstOrDefault(cc => cc.CardNum == cardNum);
+
+            if (selectedPaymentMethod == null)
+            {
+                Console.WriteLine("No matching Credit Card found. Please try again.");
+                continue; 
+            }
+
+            var creditCard = (CreditCard)selectedPaymentMethod;
+            string cardName;
+            do
+            {
+                Console.WriteLine("Enter card name: ");
+                cardName = Console.ReadLine();
+                if (cardName != name)
+                {
+                    Console.WriteLine("Card name does not match user's name!");
+                }
+            } while (cardName != name);
+            creditCard.CardName = cardName;
+
+            Console.WriteLine("Enter bank: ");
+            creditCard.Bank = Console.ReadLine();
         }
     }
 
-    if (paymentMethod == "1")
-    {
-        Console.WriteLine("Enter wallet type:");
-    }
-    else if (paymentMethod == "2")
-    {
-        PaymentMethod debitPayment = new DebitCard();
-        Console.WriteLine("Enter card number: ");
-        ((DebitCard)debitPayment).CardNum = Console.ReadLine();
-        Console.WriteLine("Enter card name: ");
-        ((DebitCard)debitPayment).CardName = Console.ReadLine();
-        Console.WriteLine("Enter bank: ");
-        ((DebitCard)debitPayment).Bank = Console.ReadLine();
-    }
-    else if (paymentMethod == "3")
-    {
-        PaymentMethod creditPayment = new CreditCard();
-        ((CreditCard)creditPayment).CardNum = Console.ReadLine();
-        Console.WriteLine("Enter card name: ");
-        ((CreditCard)creditPayment).CardName = Console.ReadLine();
-        Console.WriteLine("Enter bank: ");
-        ((CreditCard)creditPayment).Bank = Console.ReadLine();
-    }
+    string status = "Confirmed";
+    booking.updateBookingStatus(status);
 }
-
 
 void displayBooking(Booking currentBooking) {
     Console.WriteLine("BookingID: " + currentBooking.BookingId);
@@ -847,6 +958,14 @@ void displayBooking(Booking currentBooking) {
     Console.WriteLine("End Date:  " + currentBooking.EndDate.ToString());
     Console.WriteLine("Pick Up Method: " + currentBooking.PickUpMethod);
     Console.WriteLine("Return Method: " + currentBooking.ReturnMethod);
+    if (currentBooking.Status == "pending")
+    {
+        Console.WriteLine("Fees owed: " + currentBooking.Payment.TotalFee);
+    }
+    else
+    {
+        Console.WriteLine("Fees owed: " + currentBooking.Payment.AdditionalCharge);
+    }
 };
 
 //return from desired location [empty]

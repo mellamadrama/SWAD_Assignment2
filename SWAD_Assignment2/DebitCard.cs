@@ -10,14 +10,16 @@ namespace SWAD_Assignment2
     {
         public string CardNum { get; set; }
         public string CardName { get; set; }
+        public double Balance { get; set; }
         public string Bank { get; set; }
 
         public DebitCard() { }
 
-        public DebitCard(string cardNum, string cardName, string bank)
+        public DebitCard(string cardNum, string cardName, double balance, string bank)
         {
             CardNum = cardNum;
             CardName = cardName;
+            Balance = balance;
             Bank = bank;
         }
     }

@@ -1,0 +1,11 @@
+﻿PaymentMethod,CardNum,Name,Balance,Bank/Type
+DebitCard,1111222233334444,John Doe,1000.00,DBS 
+DigitalWallet,,Jane Smith,1500.00,GooglePay 
+CreditCard,3333444455556666,Alice Johnson,1200.00,OCBC 
+DebitCard,4444555566667777,Robert Brown,1300.00,UOB
+DigitalWallet,,Emily Davis,1400.00,GooglePay 
+DigitalWallet,,Michael Wilson,1100.00,Apple Pay
+DebitCard,7777888899990000,Mary Clark,1600.00,UOB 
+CreditCard,8888999900001111,David Lewis,1700.00,OCBC 
+CreditCard,9999000011112222,Sarah Walker,1800.00,OCBC 
+DebitCard,0000111122223333,James Young,1900.00,DBS 
