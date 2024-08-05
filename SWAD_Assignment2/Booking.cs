@@ -71,7 +71,7 @@ namespace SWAD_Assignment2
 
         public void updatePenaltyFee(double penaltyFee)
         {
-            returnMethod.AdditionalCharge.PenaltyFee = penaltyFee;
+            payment.AdditionalCharge.PenaltyFee = penaltyFee;
         }
 
         public void updateTotalFees(double fee)

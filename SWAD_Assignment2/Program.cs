@@ -1,4 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
+// See https://aka.ms/new-console-template for more information
 
 using SWAD_Assignment2;
 using System.ComponentModel;
@@ -103,7 +103,7 @@ static List<Car> LoadCarsFromCSV(string carCsvFilePath, List<string> dates, List
         string carMake = values[2].Trim();
         string model = values[3].Trim();
         int year = Convert.ToInt32(values[4].Trim());
-        string mileage = values[5].Trim();
+        int mileage = Convert.ToInt32(values[5].Trim());
         string availability = values[6].Trim();
         string status = values[7].Trim();
 
@@ -197,10 +197,10 @@ var dates = LoadDateListFromCSV(datesCsvFilePath);
 var companyDictionary = LoadCompanyDictionary(icCsvFilePath);
 var insuranceList = LoadInsuranceFromCSV(insuranceCsvFilePath, companyDictionary);
 var paymentMethods = LoadPaymentMethodsFromCSV(paymenthMethodFilePath);
-var cars = LoadCarsFromCSV(carCsvFilePath, dates);
+var cars = LoadCarsFromCSV(carCsvFilePath, dates, insuranceList);
 
 // Login process
-Console.Write("Welcome! Please login below.");
+Console.Write("========Welcome! Please login below.========");
 Console.WriteLine();
 Console.WriteLine();
 
@@ -276,41 +276,48 @@ while (passwordAttempts < 3)
 if (user != null)
 {
     Console.WriteLine();
-    Console.WriteLine($"Welcome, {user.FullName}");
+    Console.WriteLine($"========Welcome, {user.FullName}========");
     Console.WriteLine($"Role: {user.GetRole()}");
     Console.WriteLine($"Date of Birth: {user.DateOfBirth.ToShortDateString()}");
 
     if (user is Car_Owner carOwner)
     {
-        Console.WriteLine($"Licence: {carOwner.License}");
-        var ownerCars = cars.Where(c => c.CarOwnerId == carOwner.Id).ToList();
-        Console.WriteLine();
-        Console.WriteLine("Cars Owned:");
-        foreach (var car in ownerCars)
-        {
-            Console.WriteLine($"{"License Plate:",-14} {car.LicensePlate,-9} {"Make:",-5} {car.CarMake,-15} {"Model:",-6} {car.Model,-9} {"Year:",-5} {car.Year,-6} {"Mileage:",-8} {car.Mileage}");
-        }
-
         while (true)
         {
             Console.WriteLine();
-            Console.WriteLine("1. Register Car");
-            Console.WriteLine("2. Exit");
-            Console.WriteLine("Choose an Option: ");
+            Console.WriteLine("========Menu========");
+            Console.WriteLine("1. View Cars Owned");
+            Console.WriteLine("2. Register Car");
+            Console.WriteLine("3. Exit");
+            Console.Write("Choose an Option: ");
 
             string choice = Console.ReadLine();
 
             switch (choice)
             {
                 case "1":
-                    RegisterCar(cars, insuranceList);
+                    ViewCars(cars, carOwner);
                     break;
                 case "2":
+                    RegisterCar(cars, insuranceList);
+                    break;
+                case "3":
                     Console.WriteLine("Goodbye!");
                     return;
                 default:
                     Console.WriteLine("Invalid choice. Please try again.");
                     break;
+            }
+        }
+        static void ViewCars(List<Car> cars, Car_Owner carOwner) 
+        {
+            var ownerCars = cars.Where(c => c.CarOwnerId == carOwner.Id).ToList();
+            Console.WriteLine();
+            Console.WriteLine($"Licence: {carOwner.License}");
+            Console.WriteLine("====Cars Owned====");
+            foreach (var car in ownerCars)
+            {
+                Console.WriteLine($"{"License Plate:",-14} {car.LicensePlate,-9} {"Make:",-5} {car.CarMake,-15} {"Model:",-6} {car.Model,-9} {"Year:",-5} {car.Year,-6} {"Mileage:",-8} {car.Mileage}");
             }
         }
 
@@ -326,13 +333,13 @@ if (user != null)
             Console.WriteLine();
 
             // prompt car owner for car details
-            Console.WriteLine("Please enter car details");
+            Console.WriteLine("========Please enter car details========");
 
             // Validate Car Make
             string carMake;
             while (true)
             {
-                Console.WriteLine("Enter Car Make: ");
+                Console.Write("Enter Car Make: ");
                 carMake = Console.ReadLine();
                 if (!string.IsNullOrWhiteSpace(carMake))
                 {
@@ -344,7 +351,7 @@ if (user != null)
             string carModel;
             while (true)
             {
-                Console.WriteLine("Enter Car Model: ");
+                Console.Write("Enter Car Model: ");
                 carModel = Console.ReadLine();
                 if (!string.IsNullOrWhiteSpace(carModel))
                 {
@@ -356,7 +363,7 @@ if (user != null)
             int carMileage;
             while (true)
             {
-                Console.WriteLine("Enter Car Mileage: ");
+                Console.Write("Enter Car Mileage (miles): ");
                 string mileageInput = Console.ReadLine();
                 if (int.TryParse(mileageInput, out carMileage) && carMileage >= 0)
                 {
@@ -369,7 +376,7 @@ if (user != null)
             int year;
             while (true)
             {
-                Console.WriteLine("Enter Car Year: ");
+                Console.Write("Enter Car Year: ");
                 string yearInput = Console.ReadLine();
                 if (int.TryParse(yearInput, out year) && year > 1885 && year <= DateTime.Now.Year)
                 {
@@ -382,7 +389,7 @@ if (user != null)
             string carPlateNo;
             while (true)
             {
-                Console.WriteLine("Enter Car Plate Number: ");
+                Console.Write("Enter Car Plate Number: ");
                 carPlateNo = Console.ReadLine();
                 if (!string.IsNullOrWhiteSpace(carPlateNo))
                 {
@@ -394,12 +401,12 @@ if (user != null)
             List<string> photoFiles = new List<string>();
 
             Console.WriteLine();
-            Console.WriteLine("Please upload images of the car!");
+            Console.WriteLine("========Please upload images of the car!========");
             
             string photoFile;
             while (true)
             {
-                Console.WriteLine("Upload Photo (jpg/png/jpeg/pdf) or type 'cancel' to finish: ");
+                Console.Write("Upload Photo (jpg/png/jpeg/pdf) or type 'cancel' to finish: ");
                 photoFile = Console.ReadLine().Trim().ToLower();
                 
                 if (photoFile == "cancel")
@@ -420,7 +427,7 @@ if (user != null)
             
             // Process the uploaded photos
             Console.WriteLine();
-            Console.WriteLine("Uploaded photos:");
+            Console.WriteLine("====Uploaded photos====");
             foreach (var file in photoFiles)
             {
                 Console.WriteLine(file);
@@ -430,7 +437,7 @@ if (user != null)
             string insuranceStatus = insuranceList.Any(i => i.CarPlateNo == carPlateNo) ? "Y" : "X";
 
             Console.WriteLine();
-            Console.WriteLine("Car details summary:");
+            Console.WriteLine("========Car details summary========");
             Console.WriteLine($"Car Make: {carMake}");
             Console.WriteLine($"Car Model: {carModel}");
             Console.WriteLine($"Car Mileage: {carMileage}");
@@ -457,7 +464,7 @@ if (user != null)
                 Console.WriteLine("No insurance details found for this car plate number.");
             }
 
-            Console.WriteLine("Uploaded photos:");
+            Console.WriteLine("====Uploaded photos:====");
             foreach (var file in photoFiles)
             {
                 Console.WriteLine(file);
@@ -465,7 +472,8 @@ if (user != null)
 
             while (true)
             {
-                Console.WriteLine("Are you sure you want to register this car? (yes/no)");
+                Console.WriteLine();
+                Console.Write("Are you sure you want to register this car? (yes/no)");
                 string response = Console.ReadLine().Trim().ToLower();
                 
                 if (response == "yes")
@@ -481,12 +489,12 @@ if (user != null)
                     };
                     cars.Add(newCar);
 
-                    Console.WriteLine("Car Successfully Registered!")
+                    Console.WriteLine("====Car Successfully Registered!====");
                     break;
                 }
                 else if (response == "no")
                 {
-                    Console.WriteLine("Car registration canceled.");
+                    Console.WriteLine("====Car registration canceled.====");
                     break;
                 }
                 else
@@ -494,9 +502,6 @@ if (user != null)
                     Console.WriteLine("Invalid input. Please type 'yes' or 'no'.");
                 }
             }           
-
-            // Check if car plate number exists in the insuranceList
-            string insuranceStatus = insuranceList.Any(i => i.CarPlateNo == carPlateNo) ? "Y" : "X";
         }
     }
     else if (user is Renter renter)
@@ -668,17 +673,19 @@ if (user != null)
                         }
                     }
 
-                    var bookingDates = availableDates
-                        .Where(date => string.Compare(date, startDateTime) >= 0 && string.Compare(date, endDateTime) <= 0)
-                        .ToList();
+                    int startIndex = availableDates.FindIndex(date => date == startDateTime);
+                    int endIndex = availableDates.FindIndex(date => date == endDateTime);
 
-                    selectedCar.UnavailableDates.AddRange(bookingDates);
-
-                    Console.WriteLine("Booking confirmed for the following dates and times:");
-                    foreach (var date in bookingDates)
+                    if (startIndex != -1 && endIndex != -1 && startIndex <= endIndex)
                     {
-                        Console.WriteLine(date);
+                        for (int i = startIndex; i <= endIndex; i++)
+                        {
+                            selectedCar.UnavailableDates.Add(availableDates[i]);
+                        }
+
+                        availableDates.RemoveRange(startIndex, endIndex - startIndex + 1);
                     }
+
 
                     break;
                 }

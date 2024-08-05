@@ -13,7 +13,7 @@ namespace SWAD_Assignment2
         private string carMake;
         private string model;
         private int year;
-        private string mileage;
+        private int mileage;
         private string availability;
         private string insuranceStatus;
         private Insurance insurance;
@@ -45,7 +45,7 @@ namespace SWAD_Assignment2
             get { return year; }
             set { year = value; }
         }
-        public string Mileage
+        public int Mileage
         {
             get { return mileage; }
             set { mileage = value; }
@@ -82,7 +82,7 @@ namespace SWAD_Assignment2
             set { unavailableDates = value; }
         }
         public Car() { }
-        public Car(int carOwnerId, string carPlateNo, string carMake, string model, int year, string mileage, string availability, string insuranceStatus, Insurance insurance, List<Booking> bookings)
+        public Car(int carOwnerId, string carPlateNo, string carMake, string model, int year, int mileage, string availability, string insuranceStatus, Insurance insurance, List<Booking> bookings)
         {
             this.carOwnerId = carOwnerId;
             this.carPlateNo = carPlateNo;
