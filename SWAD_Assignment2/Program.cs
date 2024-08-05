@@ -468,17 +468,19 @@ if (user != null)
                         }
                     }
 
-                    var bookingDates = availableDates
-                        .Where(date => string.Compare(date, startDateTime) >= 0 && string.Compare(date, endDateTime) <= 0)
-                        .ToList();
+                    int startIndex = availableDates.FindIndex(date => date == startDateTime);
+                    int endIndex = availableDates.FindIndex(date => date == endDateTime);
 
-                    selectedCar.UnavailableDates.AddRange(bookingDates);
-
-                    Console.WriteLine("Booking confirmed for the following dates and times:");
-                    foreach (var date in bookingDates)
+                    if (startIndex != -1 && endIndex != -1 && startIndex <= endIndex)
                     {
-                        Console.WriteLine(date);
+                        for (int i = startIndex; i <= endIndex; i++)
+                        {
+                            selectedCar.UnavailableDates.Add(availableDates[i]);
+                        }
+
+                        availableDates.RemoveRange(startIndex, endIndex - startIndex + 1);
                     }
+
 
                     break;
                 }
