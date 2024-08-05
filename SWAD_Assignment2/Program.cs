@@ -928,6 +928,8 @@ if (user != null)
                     Console.WriteLine($"{"Year:",-14} {selectedCar.Year,-9}");
                     Console.WriteLine($"{"Mileage:",-14} {selectedCar.Mileage,-9}");
                     Console.WriteLine($"{"Availability:",-14} {selectedCar.Availability,-9}");
+
+                    break;
                 }
                 else
                 {
