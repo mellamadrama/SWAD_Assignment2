@@ -16,10 +16,12 @@ namespace SWAD_Assignment2
         private int mileage;
         private string availability;
         private string insuranceStatus;
+        private float charge;
         private Insurance insurance;
         private List<Booking> bookings;
         private List<string> availableDates;
         private List<string> unavailableDates;
+        private List<string> photoList;
         public int CarOwnerId
         {
             get { return carOwnerId; }
@@ -60,6 +62,11 @@ namespace SWAD_Assignment2
             get { return insuranceStatus; }
             set { insuranceStatus = value; }
         }
+        public float Charge
+        {
+            get { return charge; }
+            set { charge = value; }
+        }
         public Insurance Insurance
         {
             get { return insurance; }
@@ -81,8 +88,14 @@ namespace SWAD_Assignment2
             get { return unavailableDates; }
             set { unavailableDates = value; }
         }
+
+        public List<string> PhotoList
+        {
+            get { return  photoList;}
+            set { photoList = value; }
+        }
         public Car() { }
-        public Car(int carOwnerId, string carPlateNo, string carMake, string model, int year, int mileage, string availability, string insuranceStatus, Insurance insurance, List<Booking> bookings)
+        public Car(int carOwnerId, string carPlateNo, string carMake, string model, int year, int mileage, string availability, string insuranceStatus, float charge,Insurance insurance, List<Booking> bookings, List<string> photoList)
         {
             this.carOwnerId = carOwnerId;
             this.carPlateNo = carPlateNo;
@@ -92,10 +105,12 @@ namespace SWAD_Assignment2
             this.mileage = mileage;
             this.availability = availability;
             this.insuranceStatus = insuranceStatus;
+            this.charge = charge;
             this.insurance=insurance;
             this.bookings=bookings;
             this.availableDates = new List<string>();
             this.unavailableDates = new List<string>();
+            this.photoList = photoList;
         }
     }
 }
