@@ -343,7 +343,7 @@ if (user != null)
             Console.WriteLine("====Cars Owned====");
             foreach (var car in ownerCars)
             {
-                Console.WriteLine($"{"License Plate:",-14} {car.LicensePlate,-9} {"Make:",-5} {car.CarMake,-15} {"Model:",-6} {car.Model,-9} {"Year:",-5} {car.Year,-6} {"Mileage:",-8} {car.Mileage}");
+                Console.WriteLine($"{"License Plate:",-14} {car.LicensePlate,-9} {"Make:",-5} {car.CarMake,-15} {"Model:",-6} {car.Model,-9} {"Year:",-5} {car.Year,-6} {"Mileage:",-8} {car.Mileage} {"Availability:", -15} {car.Availability} {"Insurance Status:", -5} {car.InsuranceStatus}");
             }
         }
 
