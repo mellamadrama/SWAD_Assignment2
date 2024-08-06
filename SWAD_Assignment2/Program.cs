@@ -776,7 +776,7 @@ if (user != null)
                             DateTimePickup = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null)
                         };
 
-                        var locations = ReadLocationsFromCsv("locations.csv");
+                        var locations = ReadLocationsFromCsv("iCar_Locations.csv");
 
                         Console.WriteLine("List of Pickup Locations:");
                         for (int i = 0; i < locations.Count; i++)
@@ -846,7 +846,7 @@ if (user != null)
 
                         Console.WriteLine("Please select a return location:");
 
-                        var locations = ReadLocationsFromCsv("locations.csv");
+                        var locations = ReadLocationsFromCsv("iCar_Locations.csv");
 
                         for (int i = 0; i < locations.Count; i++)
                         {
@@ -900,7 +900,6 @@ if (user != null)
                         return;
                     }
 
-                    // Process the booking with the selected pickup and return methods
                     Booking booking = new Booking
                     {
                         BookingId = Guid.NewGuid().ToString(),
@@ -909,25 +908,43 @@ if (user != null)
                         Status = "Confirmed",
                         PickUpMethod = pickUpMethod,
                         ReturnMethod = returnMethod,
-                        Payment = new Payment(), // Initialize the payment details as needed
+                        Payment = new Payment(),
                         Car = selectedCar
                     };
 
-                    Console.WriteLine("Booking successfully created!");
-                    Console.WriteLine($"Booking ID: {booking.BookingId}");
-                    Console.WriteLine($"Start Date: {booking.StartDate}");
-                    Console.WriteLine($"End Date: {booking.EndDate}");
-                    Console.WriteLine($"Pickup Method: {pickUpMethod}");
-                    Console.WriteLine($"Return Method: {returnMethod}");
-
                     Console.WriteLine();
-                    Console.WriteLine("Car Details:");
-                    Console.WriteLine($"{"License Plate:",-14} {selectedCar.LicensePlate,-9}");
-                    Console.WriteLine($"{"Make:",-14} {selectedCar.CarMake,-9}");
-                    Console.WriteLine($"{"Model:",-14} {selectedCar.Model,-9}");
-                    Console.WriteLine($"{"Year:",-14} {selectedCar.Year,-9}");
-                    Console.WriteLine($"{"Mileage:",-14} {selectedCar.Mileage,-9}");
-                    Console.WriteLine($"{"Availability:",-14} {selectedCar.Availability,-9}");
+                    Console.WriteLine("Booking Completed Successfully!");
+
+                    Console.WriteLine("Booking Details:");
+                    Console.WriteLine($"Car License Plate: {selectedCar.LicensePlate}");
+                    Console.WriteLine($"Booking Start Date and Time: {startDateTime}");
+                    Console.WriteLine($"Booking End Date and Time: {endDateTime}");
+
+                    if (pickUpMethod is Pickup pickup)
+                    {
+                        Console.WriteLine($"Pickup Method: Self-Pickup");
+                        Console.WriteLine($"Pickup Date and Time: {pickup.DateTimePickup}");
+                        Console.WriteLine($"Pickup Location: {pickup.PickupLocation}");
+                    }
+                    else if (pickUpMethod is DeliverCar deliverCar)
+                    {
+                        Console.WriteLine($"Pickup Method: Delivery");
+                        Console.WriteLine($"Delivery Date and Time: {deliverCar.DateTimeDeliver}");
+                        Console.WriteLine($"Delivery Location: {deliverCar.DeliveryLocation}");
+                    }
+
+                    if (returnMethod is SelfReturn selfReturnMethod)
+                    {
+                        Console.WriteLine($"Return Method: Self-Return");
+                        Console.WriteLine($"Return Date and Time: {selfReturnMethod.DateTimeReturn}");
+                        Console.WriteLine($"Return Location: {selfReturnMethod.ICarReturnLocation}");
+                    }
+                    else if (returnMethod is DeliveryReturn deliveryReturnMethod)
+                    {
+                        Console.WriteLine($"Return Method: Delivery Return");
+                        Console.WriteLine($"Return Date and Time: {deliveryReturnMethod.DateTimeReturnDelivery}");
+                        Console.WriteLine($"Return Location: {deliveryReturnMethod.ReturnLocation}");
+                    }
 
                     break;
                 }
