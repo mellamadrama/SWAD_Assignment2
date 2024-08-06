@@ -661,7 +661,7 @@ if (user != null)
             switch (choice)
             {
                 case "1":
-                    browseCar();
+                    browseCars();
                     break;
                 case "2":
                     ViewBookingHistory(renter);
@@ -724,7 +724,7 @@ if (user != null)
             return true; // Booking range is available
         }
 
-        void browseCar()
+        void browseCars()
         {
             Console.WriteLine();
             Console.WriteLine("List of Cars to Rent:");
@@ -784,12 +784,23 @@ if (user != null)
                 var availableDates = selectedCar.AvailableDates.Except(selectedCar.UnavailableDates).ToList();
                 var originalAvailableDates = new List<string>(availableDates);
                 var originalUnavailableDates = new List<string>(selectedCar.UnavailableDates);
+                int count = 0;
 
                 Console.WriteLine();
                 Console.WriteLine("Available Dates:");
                 foreach (var date in availableDates)
                 {
                     Console.WriteLine(date);
+                    count += 1;
+                }
+
+                Console.WriteLine(count);
+
+                if (count < 3)
+                {
+                    Console.WriteLine("No valid booking dates available. Redirecting to browse cars.");
+                    browseCars();
+                    return;
                 }
 
                 bool filteringCompleted = false;
@@ -884,6 +895,7 @@ if (user != null)
                         Console.WriteLine();
                         Console.WriteLine("Invalid booking range or it intersects with an unavailable date.");
                         Console.WriteLine();
+                        Console.WriteLine(selectedCar.AvailableDates.Count);
                     }
                 }
 
@@ -1129,7 +1141,7 @@ if (user != null)
                             BookingId = Guid.NewGuid().ToString(),
                             StartDate = startTime,
                             EndDate = endTime,
-                            Status = "Pending",
+                            Status = "Confirmed",
                             PickUpMethod = pickUpMethod,
                             ReturnMethod = returnMethod,
                             Payment = new Payment(DateTime.Now, totalCharge, additionalCharge),
