@@ -94,7 +94,7 @@ static Dictionary<int, string> LoadCompanyDictionary(string icCsvFilePath)
 }
 
 // populate car list
-static List<Car> LoadCarsFromCSV(string carCsvFilePath, List<string> dates, List<Insurance> insuranceList)
+static List<Car> LoadCarsFromCSV(string carCsvFilePath, List<string> dates, List<Insurance> insuranceList, Dictionary<string, List<string>> photoList)
 {
     var cars = new List<Car>();
 
@@ -109,16 +109,19 @@ static List<Car> LoadCarsFromCSV(string carCsvFilePath, List<string> dates, List
         int mileage = Convert.ToInt32(values[5].Trim());
         string availability = values[6].Trim();
         string status = values[7].Trim();
+        float charge = float.Parse(values[8].Trim());
 
         Insurance insurance = null;
         if (status == "Y")
         {
-             insurance = insuranceList.FirstOrDefault(i => i.CarPlateNo == licensePlate && i.CarOwnerId == ownerId);
+            insurance = insuranceList.FirstOrDefault(i => i.CarPlateNo == licensePlate && i.CarOwnerId == ownerId);
         }
 
-        List<Booking> bookings = new List<Booking>(); //empty list of bookings 
+        List<Booking> bookings = new List<Booking>(); // empty list of bookings 
 
-        var car = new Car(ownerId, licensePlate, carMake, model, year, mileage, availability, status, insurance, bookings);
+        List<string> carPhotos = photoList.ContainsKey(licensePlate) ? photoList[licensePlate] : new List<string>();
+
+        var car = new Car(ownerId, licensePlate, carMake, model, year, mileage, availability, status, charge, insurance, bookings, carPhotos);
 
         car.AvailableDates = new List<string>(dates);
 
@@ -136,6 +139,30 @@ static List<Car> LoadCarsFromCSV(string carCsvFilePath, List<string> dates, List
     }
 
     return cars;
+}
+
+static Dictionary<string, List<string>> LoadPhotoListFromCSV(string photoCsvFilePath)
+{
+    var photoList = new Dictionary<string, List<string>>();
+
+    foreach (var line in File.ReadLines(photoCsvFilePath).Skip(1)) 
+    {
+        var values = line.Split(',');
+        string licensePlate = values[0].Trim();
+        var photos = new List<string>();
+
+        for (int i = 1; i <= 5; i++)
+        {
+            if (!string.IsNullOrEmpty(values[i].Trim()) && values[i].Trim() != "nil")
+            {
+                photos.Add(values[i].Trim());
+            }
+        }
+
+        photoList[licensePlate] = photos;
+    }
+
+    return photoList;
 }
 
 static List<string> LoadDateListFromCSV(string datesCsvFilePath)
@@ -217,13 +244,15 @@ string insuranceCsvFilePath = "Insurance_list.csv";
 string datesCsvFilePath = "DateTimeSlots.csv";
 string paymenthMethodFilePath = "PaymentMethods.csv";
 string locationsCsvFilePath = "iCar_Locations.csv";
+string photoCsvFilePath = "Photo_List.csv";
 
 var users = LoadUsersFromCSV(usercsvFilePath);
 var dates = LoadDateListFromCSV(datesCsvFilePath);
 var companyDictionary = LoadCompanyDictionary(icCsvFilePath);
 var insuranceList = LoadInsuranceFromCSV(insuranceCsvFilePath, companyDictionary);
 var paymentMethods = LoadPaymentMethodsFromCSV(paymenthMethodFilePath);
-var cars = LoadCarsFromCSV(carCsvFilePath, dates, insuranceList);
+var photoList = LoadPhotoListFromCSV(photoCsvFilePath);
+var cars = LoadCarsFromCSV(carCsvFilePath, dates, insuranceList, photoList);
 var locations = ReadLocationsFromCsv(locationsCsvFilePath);
 
 User user = null;
@@ -286,20 +315,6 @@ User login()
 
             if (user != null)
             {
-                if (user.GetRole() == "Renter")
-                {
-
-                }
-                else if (user.GetRole() == "Car Owner")
-                {
-
-                }
-                else
-                {
-
-                }
-
-
                 return user;
             }
             else
@@ -369,6 +384,28 @@ if (user != null)
             {
                 string line = $"{newCar.CarOwnerId},{newCar.LicensePlate},{newCar.CarMake},{newCar.Model},{newCar.Year},{newCar.Mileage},{newCar.Availability},{newCar.InsuranceStatus}";
                 writer.WriteLine(line);
+            }
+        }
+
+        static void AppendPhotosToCSV(string photoCsvFilePath, string carPlateNo, List<string> photoFiles)
+        {
+            const int MaxPhotos = 5;
+            var p = new List<string>(photoFiles);
+
+            while (p.Count < MaxPhotos)
+            {
+                p.Add("nil");
+            }
+
+            if (p.Count > MaxPhotos)
+            {
+                p = p.Take(MaxPhotos).ToList();
+            }
+            string photoList = string.Join(",", p);
+
+            using (var writer = new StreamWriter(photoCsvFilePath, true))
+            {
+                writer.WriteLine($"{carPlateNo},{photoList}");
             }
         }
 
@@ -466,19 +503,8 @@ if (user != null)
                 Console.WriteLine("Invalid input. Car Mileage must be a non-negative integer.");
             }
 
-            // Validate Car Availability
-            string availability;
-            while (true)
-            {
-                Console.Write("Enter Car Availability (available/not available): ");
-                availability = Console.ReadLine().Trim().ToLower();
-                if (availability == "available" || availability == "not available")
-                {
-                    availability = availability.Equals("available") ? "A" : "N";
-                    break;
-                }
-                Console.WriteLine("Invalid input. Please enter 'available' or 'not available'.");
-            }
+            // Car Availability
+            string availability = "Available";
 
             // Validate photos
             List<string> photoFiles = new List<string>();
@@ -489,14 +515,20 @@ if (user != null)
             string photoFile;
             while (true)
             {
+                if (photoFiles.Count >= 5)
+                {
+                    Console.WriteLine("You have reached the maximum number of photo uploads (5).");
+                    break;
+                }
+
                 Console.Write("Upload Photo (jpg/png/jpeg/pdf) or type 'done' to finish: ");
                 photoFile = Console.ReadLine().Trim().ToLower();
-                
+
                 if (photoFile == "done")
                 {
                     break;
                 }
-                
+
                 if (IsValidFileType(photoFile))
                 {
                     photoFiles.Add(photoFile);
@@ -507,14 +539,38 @@ if (user != null)
                     Console.WriteLine("Invalid file type. Please upload a file with a valid extension (jpg, png, jpeg, pdf).");
                 }
             }
-            
+
             // Process the uploaded photos
             Console.WriteLine();
             Console.WriteLine("====Uploaded photos====");
             foreach (var file in photoFiles)
             {
                 Console.WriteLine(file);
-            } 
+            }
+
+            // Set Car Owner Charge (per hour)
+            Console.WriteLine();
+            Console.WriteLine("====Set Hourly Charge ($)====");
+            float charge;
+            while(true)
+            {
+                Console.Write("Enter Hourly Charge ($): ");
+                string Charge = Console.ReadLine();
+
+                if (float.TryParse(Charge, NumberStyles.Float, CultureInfo.InvariantCulture, out charge))
+                {
+                    // Round the charge to 2 decimal places
+                    charge = (float)Math.Round(charge, 2);
+
+                    // Ensure the charge has 2 decimal places for display
+                    Console.WriteLine($"Hourly Charge Set: ${charge:F2}");
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine("Invalid input. Please enter a valid number.");
+                }
+            }
             
             // Check if car plate number exists in the insuranceList
             string insuranceStatus = insuranceList.Any(i => i.CarPlateNo == carPlateNo) ? "Y" : "X";
@@ -527,6 +583,7 @@ if (user != null)
             Console.WriteLine($"Year: {year}");
             Console.WriteLine($"Car Mileage: {carMileage}");
             Console.WriteLine($"Availability: {availability}");
+            Console.WriteLine($"Hourly Charge: ${charge}");
             if (insuranceStatus == "Y")
             {
                 Console.WriteLine($"Insurance Status: {insuranceStatus}");
@@ -571,10 +628,12 @@ if (user != null)
                         Year = year,
                         Mileage = carMileage,
                         Availability = availability,
-                        InsuranceStatus = insuranceStatus
+                        InsuranceStatus = insuranceStatus,
+                        Charge = charge,
                     };
                     cars.Add(newCar);
-                    AppendCarToCSV("cars.csv", newCar);
+                    AppendCarToCSV("Car_List.csv", newCar);
+                    AppendPhotosToCSV("Photo_List.csv", carPlateNo, photoFiles);
                     Console.WriteLine("====Car Successfully Registered!====");
                     break;
                 }
@@ -614,10 +673,16 @@ if (user != null)
                     returnCar();
                     break;
                 case "5":
+                    PickUpCar(renter);
+                    break;
+                case "6":
                     Console.WriteLine("Logging out...");
                     Console.WriteLine();
                     user = login();
                     displayUserDetails(user);
+                    break;
+                case "7": 
+                    MakePayment();
                     break;
                 case "0":
                     Console.WriteLine("Goodbye!");
@@ -908,7 +973,7 @@ if (user != null)
 
                     Booking booking = new Booking
                     {
-                        BookingId = Guid.NewGuid().ToString(),
+                        BookingId = Guid.NewGuid().ToString(), 
                         StartDate = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null),
                         EndDate = DateTime.ParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null),
                         Status = "Confirmed",
@@ -984,10 +1049,13 @@ void displayRenterMainMenu() {
     Console.WriteLine("2. View Booking History");
     Console.WriteLine("3. View Payment History");
     Console.WriteLine("4. Return Car");
-    Console.WriteLine("5. Logout");
+    Console.WriteLine("5. Pick up car");
+    Console.WriteLine("6. Logout");
+    Console.WriteLine("7. payment just to test i will remove this later");
     Console.WriteLine("0. Exit");
     Console.WriteLine("Choose an option:");
 }
+// i done alr u can test if u want
 
 void displayCarOwnerMainMenu()
 {
@@ -1047,12 +1115,13 @@ void returnCar()
 
 // return to iCar Station
 void returnToiCarStation()
-{
+{ 
     double totalReturnFee = 0;
-    Booking booking = getOngoingBooking((Renter)user);
-    SelfReturn returnMethod = (SelfReturn) booking.ReturnMethod;
+    Booking booking = getOngoingBooking((Renter)user); 
+    SelfReturn returnMethod = new SelfReturn();
     DateTime retDateTime = DateTime.Now;
     returnMethod.DateTimeReturn = retDateTime;
+    booking.ReturnMethod = returnMethod;
     DateTime endDate = booking.EndDate;
     if (retDateTime > endDate)
     {
@@ -1062,7 +1131,8 @@ void returnToiCarStation()
         string PenaltyFee = "Penalty Fee for late return: " + penaltyFee;
         display(PenaltyFee);
     }
-    promptCheckForDamages();
+    string damages = promptCheckForDamages();
+    updateDamages(damages);
     if (totalReturnFee > 0)
     {
         booking.updateTotalFees(totalReturnFee);
@@ -1085,7 +1155,7 @@ Booking getOngoingBooking(Renter user)
     Booking ongoingBooking = null;
     foreach (Booking booking in user.Bookings)
     {
-        if (booking.PickUpMethod != null)
+        if (booking.Status == "Picked Up") 
         {
             ongoingBooking = booking;
         }
@@ -1101,10 +1171,11 @@ double calculatePenaltyFee(DateTime retDateTime, DateTime endDate, Booking ongoi
     TimeSpan overTime = retDateTime - endDate;
     double totalFee = ongoingBooking.Payment.TotalFee; //get current total cost of booking
     penaltyFee = totalFee * 0.20 * overTime.Hours;
+    penaltyFee =Math.Round(penaltyFee, 2);
     return penaltyFee;
 }
 
-void promptCheckForDamages()
+string promptCheckForDamages()
 {
     Console.WriteLine("Please check for damages. If there are damages, enter 'Has Damages'. Else enter 'No Damages'.");
     string damages = Console.ReadLine();
@@ -1114,7 +1185,7 @@ void promptCheckForDamages()
         Console.WriteLine("Please check for damages. If there are damages, enter 'Has Damages'. Else enter 'No Damages'.");
         damages = Console.ReadLine();
     }
-    updateDamages(damages);
+    return damages;
 }
 
 void updateDamages(string damages)
@@ -1127,8 +1198,61 @@ void updateDamages(string damages)
 
 void reportAccident() { }
 
+void PickUpCar(Renter user)
+{
+    // Mock data
+    string startPick = "2024-12-03";
+    DateTime startPickDate = DateTime.ParseExact(startPick, "yyyy-MM-dd", CultureInfo.InvariantCulture);
+    string returnDate = "2024-12-07";
+    DateTime returnDateDT = DateTime.ParseExact(returnDate, "yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+    // Initialize Pickup and SelfReturn
+    PickUpMethod pickUp = new Pickup(startPickDate, "ABC Location");
+    AdditionalCharge additionalCharge = new AdditionalCharge(0, 0);
+    ReturnMethod returnMethod = new SelfReturn(returnDateDT, "ABC Location", additionalCharge);
+
+    // Payment methods
+    List<PaymentMethod> paymentMethods = new List<PaymentMethod>();
+    DigitalWallet digitalWallet = new DigitalWallet("JOHN DOE", "PAYPAL", 10000);
+    paymentMethods.Add(digitalWallet);
+
+    // Payment details
+    Payment payment = new Payment(returnDateDT, 123, additionalCharge, paymentMethods);
+    DateTime bookingDate = DateTime.ParseExact("2024-03-20", "yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+    // Initialize Car and Booking
+    Car car = new Car();
+    Booking booking = new Booking("1", bookingDate, bookingDate, "Picked Up", pickUp, returnMethod, payment, car);
+
+    // Add mock data to the user's list of bookings
+    user.Bookings.Add(booking);
+
+    Console.WriteLine("Pickup confirmed.");
+}
+
+
+
+
+// make payment 
 void MakePayment() {
-    Booking booking = getOngoingBooking((Renter)user);
+    string startPick = "2024-12-03";
+    DateTime startPickDate = DateTime.ParseExact(startPick, "yyyy-MM-dd", CultureInfo.InvariantCulture);
+    string returnDate = "2024-12-07";
+    DateTime returnDateDT = DateTime.ParseExact(returnDate, "yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+    Pickup pickUp = new Pickup(startPickDate, "ABC Location");
+    AdditionalCharge ac = new AdditionalCharge(0, 0);
+    SelfReturn ret = new SelfReturn(returnDateDT, "ABC Location", ac);
+
+    List<PaymentMethod> pmList = new List<PaymentMethod>();
+    DigitalWallet cc = new DigitalWallet("JOHN DOE", "PAYPAL", 10000);
+    pmList.Add(cc);
+
+    Payment payment = new Payment(returnDateDT, 123, ac, pmList); 
+    DateTime bookingDate = DateTime.ParseExact("2024-03-20", "yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+    Car car = new Car();
+    Booking booking = new Booking("1", bookingDate, bookingDate, "Pending", pickUp, ret, payment, car);
 
     displayBooking(booking);
     string name = user.FullName;
@@ -1144,7 +1268,7 @@ void MakePayment() {
 
     (PaymentMethod selectedPaymentMethod, double accBalance) = validatePaymentMethod();
 
-    while (accBalance > booking.Payment.TotalFee)
+    while (accBalance < booking.Payment.TotalFee)
     {
         Console.WriteLine("Balance insufficient! Please choose another payment method!");
         (selectedPaymentMethod, accBalance) = validatePaymentMethod();
@@ -1170,6 +1294,7 @@ void MakePayment() {
     sendReceipt((Renter)user);
 }
 
+// validate payment method exists
 (PaymentMethod, double) validatePaymentMethod()
 {
     PaymentMethod selectedPaymentMethod = null;
@@ -1313,7 +1438,7 @@ void MakePayment() {
     return (null, 0); 
 }
 
-
+// send receipt method
 void sendReceipt(Renter user)
 {
     Console.WriteLine("How would you like receipt to be sent?");
@@ -1340,13 +1465,14 @@ void sendReceipt(Renter user)
     }
 }
 
+// display current booking details
 void displayBooking(Booking currentBooking) {
     Console.WriteLine("BookingID: " + currentBooking.BookingId);
     Console.WriteLine("Start Date: " + currentBooking.StartDate.ToString());
     Console.WriteLine("End Date:  " + currentBooking.EndDate.ToString());
     Console.WriteLine("Pick Up Method: " + currentBooking.PickUpMethod);
     Console.WriteLine("Return Method: " + currentBooking.ReturnMethod);
-    if (currentBooking.Status == "pending")
+    if (currentBooking.Status == "Pending")
     {
         Console.WriteLine("Fees owed: " + currentBooking.Payment.TotalFee);
     }
