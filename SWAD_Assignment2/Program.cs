@@ -122,14 +122,14 @@ static List<Car> LoadCarsFromCSV(string carCsvFilePath, List<string> dates, List
 
         car.AvailableDates = new List<string>(dates);
 
-        if (values.Length > 8)
-        {
-            car.AvailableDates = values[8].Split(';').ToList();
-        }
-
         if (values.Length > 9)
         {
-            car.UnavailableDates = values[9].Split(';').ToList();
+            car.AvailableDates = values[9].Split(';').ToList();
+        }
+
+        if (values.Length > 10)
+        {
+            car.UnavailableDates = values[10].Split(';').ToList();
         }
 
         cars.Add(car);
