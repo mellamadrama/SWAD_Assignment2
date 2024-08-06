@@ -11,7 +11,6 @@ namespace SWAD_Assignment2
         private DateTime date;
         private double totalFee;
         public AdditionalCharge AdditionalCharge { get; set; }
-        public List<PaymentMethod> PaymentMethods { get; set; }
 
         public DateTime Date
         {
@@ -25,17 +24,11 @@ namespace SWAD_Assignment2
             set { totalFee = value; }
         }
 
-        public Payment()
-        {
-            PaymentMethods = new List<PaymentMethod>();
-        }
-
-        public Payment(DateTime date, double totalFee, AdditionalCharge additionalCharge, List<PaymentMethod> paymentMethods)
+        public Payment(DateTime date, double totalFee, AdditionalCharge additionalCharge)
         {
             this.date = date;
             this.totalFee = totalFee;
             AdditionalCharge = additionalCharge;
-            PaymentMethods = paymentMethods ?? new List<PaymentMethod>();
         }
     }
 }

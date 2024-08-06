@@ -10,13 +10,15 @@ namespace SWAD_Assignment2
     {
         public double PenaltyFee { get; set; }
         public double DamageFee { get; set; }
+        public double DeliveryFee { get; set; }
 
         public AdditionalCharge() { }
 
-        public AdditionalCharge(double penaltyFee, double damageFee)
+        public AdditionalCharge(double penaltyFee, double damageFee, double deliveryFee)
         {
             PenaltyFee = penaltyFee;
             DamageFee = damageFee;
+            DeliveryFee = deliveryFee;
         }
     }
 }

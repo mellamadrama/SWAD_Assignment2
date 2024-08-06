@@ -693,7 +693,7 @@ if (user != null)
             }
         }
 
-        static void BookCar(List<Car> cars)
+        void BookCar(List<Car> cars)
         {
             bool redoBooking = true;
             while (redoBooking)
@@ -823,7 +823,7 @@ if (user != null)
                         DateTime endDate = DateTime.ParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null);
 
                         if (endDate > startDate)
-                        {
+                        {     
                             break;
                         }
                         else
@@ -855,7 +855,7 @@ if (user != null)
                 string pickupOrDelivery = Console.ReadLine().Trim().ToUpper();
 
                 PickUpMethod pickUpMethod = null;
-                decimal deliveryFee = 0;
+                double deliveryFee = 0;
 
                 if (pickupOrDelivery == "P")
                 {
@@ -1011,9 +1011,9 @@ if (user != null)
                 DateTime startTime = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null);
                 DateTime endTime = DateTime.ParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null);
                 TimeSpan duration = endTime - startTime;
-                decimal totalHours = (decimal)duration.TotalHours;
-                decimal totalCharge = totalHours * (decimal)selectedCar.Charge;
-                decimal totalDeliveryFee = deliveryFee;
+                double totalHours = (double)duration.TotalHours;
+                double totalCharge = totalHours * (double)selectedCar.Charge;
+                double totalDeliveryFee = deliveryFee;
 
                 Console.WriteLine();
                 Console.WriteLine("Booking successfully made!");
@@ -1064,6 +1064,8 @@ if (user != null)
                     Console.WriteLine("Would you like to: [C]onfirm the booking, [R]edo the booking, or [E]xit and cancel the booking?");
                     string choice = Console.ReadLine().ToUpper();
 
+                    AdditionalCharge additionalCharge = new AdditionalCharge(0,0, totalDeliveryFee);
+
                     if (choice == "C")
                     {
                         Console.WriteLine();
@@ -1073,12 +1075,13 @@ if (user != null)
                             BookingId = Guid.NewGuid().ToString(),
                             StartDate = startTime,
                             EndDate = endTime,
-                            Status = "Confirmed",
+                            Status = "Pending",
                             PickUpMethod = pickUpMethod,
                             ReturnMethod = returnMethod,
-                            Payment = new Payment(),
+                            Payment = new Payment(DateTime.Now, totalCharge, additionalCharge),
                             Car = selectedCar
                         };
+                        renter.Bookings.Add(booking);
                         redoBooking = false;
                         break;
                     }
@@ -1118,6 +1121,54 @@ if (user != null)
         {
             Console.WriteLine("Payment History:");
         }
+
+        // make payment 
+        void MakePayment()
+        {
+            Booking booking = getOngoingBooking(renter);
+
+            displayBooking(booking);
+            string name = user.FullName;
+
+            Console.WriteLine("Confirm payment amount? (yes/no) ");
+            string res = Console.ReadLine();
+
+            if (res != "yes")
+            {
+                Console.WriteLine("Payment Cancelled.");
+                return;
+            }
+
+            (PaymentMethod selectedPaymentMethod, double accBalance) = validatePaymentMethod();
+
+
+            if (booking.Status == "Pending")
+            {
+                while (accBalance < booking.Payment.TotalFee + booking.Payment.AdditionalCharge.DeliveryFee)
+                {
+                    Console.WriteLine("Balance insufficient! Please choose another payment method!");
+                    (selectedPaymentMethod, accBalance) = validatePaymentMethod();
+                }
+
+                selectedPaymentMethod.DeductBalance(booking.Payment.TotalFee);
+
+                string status = "Confirmed";
+                booking.updateBookingStatus(status);
+            }
+            else if (booking.Status == "Confirmed")
+            {
+                while (accBalance < booking.Payment.AdditionalCharge.PenaltyFee + booking.Payment.AdditionalCharge.DamageFee)
+                {
+                    Console.WriteLine("Balance insufficient! Please choose another payment method!");
+                    (selectedPaymentMethod, accBalance) = validatePaymentMethod();
+                }
+                double additionalCharge = booking.Payment.AdditionalCharge.PenaltyFee + booking.Payment.AdditionalCharge.DamageFee;
+
+                selectedPaymentMethod.DeductBalance(additionalCharge);
+            }
+
+            sendReceipt((Renter)user);
+        }
     }
 }
 else
@@ -1138,7 +1189,6 @@ void displayRenterMainMenu() {
     Console.WriteLine("0. Exit");
     Console.WriteLine("Choose an option:");
 }
-// i done alr u can test if u want
 
 void displayCarOwnerMainMenu()
 {
@@ -1219,7 +1269,6 @@ void returnToiCarStation()
     if (totalReturnFee > 0)
     {
         booking.updateTotalFees(totalReturnFee);
-        MakePayment();
     }
     else
     {
@@ -1238,10 +1287,11 @@ Booking getOngoingBooking(Renter user)
     Booking ongoingBooking = null;
     foreach (Booking booking in user.Bookings)
     {
-        if (booking.Status == "Picked Up") 
+        if (booking.Status == "Pending" || booking.Status == "Confirmed")
         {
             ongoingBooking = booking;
         }
+
         else continue;
     }
     return ongoingBooking;
@@ -1283,98 +1333,10 @@ void reportAccident() { }
 
 void PickUpCar(Renter user)
 {
-    // Mock data
-    string startPick = "2024-12-03";
-    DateTime startPickDate = DateTime.ParseExact(startPick, "yyyy-MM-dd", CultureInfo.InvariantCulture);
-    string returnDate = "2024-12-07";
-    DateTime returnDateDT = DateTime.ParseExact(returnDate, "yyyy-MM-dd", CultureInfo.InvariantCulture);
+    Booking booking = getOngoingBooking(user);
 
-    // Initialize Pickup and SelfReturn
-    PickUpMethod pickUp = new Pickup(startPickDate, "ABC Location");
-    AdditionalCharge additionalCharge = new AdditionalCharge(0, 0);
-    ReturnMethod returnMethod = new SelfReturn(returnDateDT, "ABC Location", additionalCharge);
-
-    // Payment methods
-    List<PaymentMethod> paymentMethods = new List<PaymentMethod>();
-    DigitalWallet digitalWallet = new DigitalWallet("JOHN DOE", "PAYPAL", 10000);
-    paymentMethods.Add(digitalWallet);
-
-    // Payment details
-    Payment payment = new Payment(returnDateDT, 123, additionalCharge, paymentMethods);
-    DateTime bookingDate = DateTime.ParseExact("2024-03-20", "yyyy-MM-dd", CultureInfo.InvariantCulture);
-
-    // Initialize Car and Booking
-    Car car = new Car();
-    Booking booking = new Booking("1", bookingDate, bookingDate, "Picked Up", pickUp, returnMethod, payment, car);
-
-    // Add mock data to the user's list of bookings
-    user.Bookings.Add(booking);
-
+    booking.Status = "Picked Up";
     Console.WriteLine("Pickup confirmed.");
-}
-
-
-
-
-// make payment 
-void MakePayment() {
-    string startPick = "2024-12-03";
-    DateTime startPickDate = DateTime.ParseExact(startPick, "yyyy-MM-dd", CultureInfo.InvariantCulture);
-    string returnDate = "2024-12-07";
-    DateTime returnDateDT = DateTime.ParseExact(returnDate, "yyyy-MM-dd", CultureInfo.InvariantCulture);
-
-    Pickup pickUp = new Pickup(startPickDate, "ABC Location");
-    AdditionalCharge ac = new AdditionalCharge(0, 0);
-    SelfReturn ret = new SelfReturn(returnDateDT, "ABC Location", ac);
-
-    List<PaymentMethod> pmList = new List<PaymentMethod>();
-    DigitalWallet cc = new DigitalWallet("JOHN DOE", "PAYPAL", 10000);
-    pmList.Add(cc);
-
-    Payment payment = new Payment(returnDateDT, 123, ac, pmList); 
-    DateTime bookingDate = DateTime.ParseExact("2024-03-20", "yyyy-MM-dd", CultureInfo.InvariantCulture);
-
-    Car car = new Car();
-    Booking booking = new Booking("1", bookingDate, bookingDate, "Pending", pickUp, ret, payment, car);
-
-    displayBooking(booking);
-    string name = user.FullName;
-
-    Console.WriteLine("Confirm payment amount? (yes/no) ");
-    string res = Console.ReadLine();
-
-    if (res != "yes")
-    {
-        Console.WriteLine("Payment Cancelled.");
-        return;
-    }
-
-    (PaymentMethod selectedPaymentMethod, double accBalance) = validatePaymentMethod();
-
-    while (accBalance < booking.Payment.TotalFee)
-    {
-        Console.WriteLine("Balance insufficient! Please choose another payment method!");
-        (selectedPaymentMethod, accBalance) = validatePaymentMethod();
-    }
-
-
-    if (booking.Status == "Pending")
-    {
-        selectedPaymentMethod.DeductBalance(booking.Payment.TotalFee);
-
-        string status = "Confirmed";
-        booking.updateBookingStatus(status);
-    }
-    else if (booking.Status == "Confirmed")
-    {
-        double additionalCharge = booking.Payment.AdditionalCharge.PenaltyFee + booking.Payment.AdditionalCharge.DamageFee;
-
-        selectedPaymentMethod.DeductBalance(additionalCharge);
-    }
-
-    displayBooking(booking);
-
-    sendReceipt((Renter)user);
 }
 
 // validate payment method exists
@@ -1385,20 +1347,25 @@ void MakePayment() {
     while (selectedPaymentMethod == null)
     {
         Console.WriteLine("Proceed with payment");
+        Console.WriteLine();
 
-        Console.WriteLine("Select Payment Method: ");
         Console.WriteLine("1. Digital Wallet");
         Console.WriteLine("2. Debit Card");
         Console.WriteLine("3. Credit Card");
+        Console.Write("Select Payment Method: ");
 
         string method = Console.ReadLine();
 
         while (method != "1" && method != "2" && method != "3")
         {
-            Console.WriteLine("Select Payment Method: ");
+            Console.WriteLine("Invalid input! Please try again.");
+
+            Console.WriteLine();
+
             Console.WriteLine("1. Digital Wallet");
             Console.WriteLine("2. Debit Card");
             Console.WriteLine("3. Credit Card");
+            Console.Write("Select Payment Method: ");
 
             method = Console.ReadLine();
 
@@ -1410,7 +1377,8 @@ void MakePayment() {
 
         if (method == "1")
         {
-            Console.WriteLine("Enter wallet type:");
+            Console.WriteLine();
+            Console.Write("Enter wallet type:");
             string walletType = Console.ReadLine();
             selectedPaymentMethod = paymentMethods
                 .OfType<DigitalWallet>()
@@ -1426,7 +1394,8 @@ void MakePayment() {
             string cardName;
             do
             {
-                Console.WriteLine("Enter card name: ");
+                Console.WriteLine();
+                Console.Write("Enter card name: ");
                 cardName = Console.ReadLine();
                 if (digitalWallet.Name != cardName)
                 {
@@ -1443,7 +1412,8 @@ void MakePayment() {
             string cardNum;
             do
             {
-                Console.WriteLine("Enter card number: ");
+                Console.WriteLine();
+                Console.Write("Enter card number: ");
                 cardNum = Console.ReadLine();
                 if (cardNum.Length != 16)
                 {
@@ -1550,14 +1520,25 @@ void sendReceipt(Renter user)
 
 // display current booking details
 void displayBooking(Booking currentBooking) {
-    Console.WriteLine("BookingID: " + currentBooking.BookingId);
-    Console.WriteLine("Start Date: " + currentBooking.StartDate.ToString());
-    Console.WriteLine("End Date:  " + currentBooking.EndDate.ToString());
-    Console.WriteLine("Pick Up Method: " + currentBooking.PickUpMethod);
-    Console.WriteLine("Return Method: " + currentBooking.ReturnMethod);
+    DateTime startTime = currentBooking.StartDate;
+    DateTime endTime = currentBooking.EndDate;
+
+    TimeSpan duration = endTime - startTime;
+    double totalHours = (double)duration.TotalHours;
+    double totalCharge = totalHours * (double)currentBooking.Car.Charge;
+    double totalDeliveryFee = currentBooking.Payment.AdditionalCharge.DeliveryFee;
+
+    Console.WriteLine("Booking Details:");
+    Console.WriteLine($"Car License Plate: {currentBooking.Car.LicensePlate}");
+    Console.WriteLine($"Booking Start Date and Time: {startTime}");
+    Console.WriteLine($"Booking End Date and Time: {endTime}");
+    Console.WriteLine();
+
     if (currentBooking.Status == "Pending")
     {
-        Console.WriteLine("Fees owed: " + currentBooking.Payment.TotalFee);
+        Console.WriteLine($"Total Booking Charge: {totalCharge:C}");
+        Console.WriteLine($"Total Delivery Fee: {totalDeliveryFee:C}");
+        Console.WriteLine($"Final Total: {(totalCharge + totalDeliveryFee):C}");
     }
     else
     {
