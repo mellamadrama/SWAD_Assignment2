@@ -693,6 +693,37 @@ if (user != null)
             }
         }
 
+        static bool IsBookingTimeValid(string startDateTime, string endDateTime, Car selectedCar)
+        {
+            DateTime startDate, endDate;
+
+            if (!DateTime.TryParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null, DateTimeStyles.None, out startDate) ||
+                !DateTime.TryParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null, DateTimeStyles.None, out endDate))
+            {
+                return false; // Invalid date format
+            }
+
+            if (startDate >= endDate)
+            {
+                return false; // Start date must be before end date
+            }
+
+            // Check if the booking range intersects with any unavailable dates
+            foreach (var date in selectedCar.UnavailableDates)
+            {
+                DateTime unavailableDate;
+                if (DateTime.TryParseExact(date, "yyyy-MM-dd hh:mm tt", null, DateTimeStyles.None, out unavailableDate))
+                {
+                    if (unavailableDate >= startDate && unavailableDate < endDate)
+                    {
+                        return false; // Booking range intersects with an unavailable date
+                    }
+                }
+            }
+
+            return true; // Booking range is available
+        }
+
         static void BookCar(List<Car> cars)
         {
             bool redoBooking = true;
@@ -799,41 +830,57 @@ if (user != null)
 
                 while (true)
                 {
-                    Console.WriteLine("Please enter the start date and time slot for your booking (yyyy-MM-dd hh:mm tt): ");
-                    startDateTime = Console.ReadLine();
-
-                    if (availableDates.Contains(startDateTime) && !selectedCar.UnavailableDates.Contains(startDateTime) && availableDates.IndexOf(startDateTime) != availableDates.Count - 1)
+                    while (true)
                     {
-                        break;
-                    }
-                    else
-                    {
-                        Console.WriteLine("Invalid start date and time or it is unavailable, or it is the last available date. Please try again.");
-                    }
-                }
+                        Console.WriteLine("Please enter the start date and time slot for your booking (yyyy-MM-dd hh:mm tt): ");
+                        startDateTime = Console.ReadLine();
 
-                while (true)
-                {
-                    Console.WriteLine("Please enter the end date and time slot for your booking (yyyy-MM-dd hh:mm tt): ");
-                    endDateTime = Console.ReadLine();
-
-                    if (availableDates.Contains(endDateTime) && !selectedCar.UnavailableDates.Contains(endDateTime) && availableDates.IndexOf(endDateTime) != 0)
-                    {
-                        DateTime startDate = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null);
-                        DateTime endDate = DateTime.ParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null);
-
-                        if (endDate > startDate)
+                        if (!selectedCar.UnavailableDates.Contains(startDateTime) && availableDates.IndexOf(startDateTime) != availableDates.Count - 1)
                         {
                             break;
                         }
                         else
                         {
-                            Console.WriteLine("End date and time must be after the start date and time. Please try again.");
+                            Console.WriteLine("Invalid start date and time or it is unavailable, or it is the last available date. Please try again.");
                         }
+                    }
+
+                    while (true)
+                    {
+                        Console.WriteLine("Please enter the end date and time slot for your booking (yyyy-MM-dd hh:mm tt): ");
+                        endDateTime = Console.ReadLine();
+
+                        if (!selectedCar.UnavailableDates.Contains(endDateTime) && availableDates.IndexOf(endDateTime) != 0)
+                        {
+                            DateTime startDate = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null);
+                            DateTime endDate = DateTime.ParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null);
+
+                            if (endDate > startDate)
+                            {
+                                break;
+                            }
+                            else
+                            {
+                                Console.WriteLine("End date and time must be after the start date and time. Please try again.");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Invalid end date and time or it is unavailable, or it is the first available date. Please try again.");
+                        }
+                    }
+
+                    if (IsBookingTimeValid(startDateTime, endDateTime, selectedCar))
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine("Booking date is valid.");
+                        break;
                     }
                     else
                     {
-                        Console.WriteLine("Invalid end date and time or it is unavailable, or it is the first available date. Please try again.");
+                        Console.WriteLine();
+                        Console.WriteLine("Invalid booking range or it intersects with an unavailable date.");
+                        Console.WriteLine();
                     }
                 }
 
