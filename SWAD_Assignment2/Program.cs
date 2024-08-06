@@ -695,333 +695,415 @@ if (user != null)
 
         static void BookCar(List<Car> cars)
         {
-            Console.WriteLine();
-            Console.WriteLine("List of Cars to Rent:");
-            foreach (var car in cars)
+            bool redoBooking = true;
+            while (redoBooking)
             {
-                Console.WriteLine($"{"License Plate:",-14} {car.LicensePlate,-9} {"Make:",-5} {car.CarMake,-15} {"Model:",-6} {car.Model,-9} {"Year:",-5} {car.Year,-6} {"Mileage:",-8} {car.Mileage,-14} {"Availability:",-13} {car.Availability}");
-            }
+                redoBooking = false;
 
-            Car selectedCar = null;
-
-            while (selectedCar == null)
-            {
                 Console.WriteLine();
-                Console.WriteLine("Please enter the license plate of your selected car: ");
-                string licensePlate = Console.ReadLine();
-
-                selectedCar = cars.FirstOrDefault(car => car.LicensePlate.Equals(licensePlate, StringComparison.OrdinalIgnoreCase));
-
-                if (selectedCar == null)
+                Console.WriteLine("List of Cars to Rent:");
+                foreach (var car in cars)
                 {
-                    Console.WriteLine("Invalid license plate. Please try again.");
+                    Console.WriteLine($"{"License Plate:",-14} {car.LicensePlate,-9} {"Make:",-5} {car.CarMake,-15} {"Model:",-6} {car.Model,-9} {"Year:",-5} {car.Year,-6} {"Mileage:",-8} {car.Mileage,-14} {"Availability:",-13} {car.Availability}");
                 }
-            }
 
-            string bookingInput = string.Empty;
+                Car selectedCar = null;
 
-            while (true)
-            {
-                Console.WriteLine();
-                Console.WriteLine("Press Enter to start the booking: ");
-                bookingInput = Console.ReadLine();
-
-                if (string.IsNullOrEmpty(bookingInput))
-                {
-                    break;
-                }
-                else
+                while (selectedCar == null)
                 {
                     Console.WriteLine();
-                    Console.WriteLine("Invalid input. Please press Enter to start the booking.");
-                }
-            }
+                    Console.WriteLine("Please enter the license plate of your selected car: ");
+                    string licensePlate = Console.ReadLine();
 
+                    selectedCar = cars.FirstOrDefault(car => car.LicensePlate.Equals(licensePlate, StringComparison.OrdinalIgnoreCase));
 
-            Console.WriteLine();
-            Console.WriteLine("Car Details:");
-            Console.WriteLine($"{"License Plate:",-14} {selectedCar.LicensePlate,-9} {"Make:",-5} {selectedCar.CarMake,-15} {"Model:",-6} {selectedCar.Model,-9} {"Year:",-5} {selectedCar.Year,-6} {"Mileage:",-8} {selectedCar.Mileage,-14} {"Availability:",-13} {selectedCar.Availability}");
-
-            var availableDates = selectedCar.AvailableDates.Except(selectedCar.UnavailableDates).ToList();
-
-            Console.WriteLine();
-            Console.WriteLine("Available Dates:");
-            foreach (var date in availableDates)
-            {
-                Console.WriteLine(date);
-            }
-
-            while (true)
-            {
-                Console.WriteLine();
-                Console.WriteLine("Do you want to filter the available time slots by selecting a specific month? ‘Y’ or ‘N’");
-                string filterChoice = Console.ReadLine().Trim().ToUpper();
-                Console.WriteLine();
-
-                if (filterChoice == "Y")
-                {
-                    Console.WriteLine("Enter the month (1-12) you want to filter:");
-                    if (int.TryParse(Console.ReadLine(), out int month) && month >= 1 && month <= 12)
+                    if (selectedCar == null)
                     {
-                        var filteredDates = availableDates.Where(date => DateTime.TryParse(date, out DateTime dt) && dt.Month == month).ToList();
+                        Console.WriteLine("Invalid license plate. Please try again.");
+                    }
+                }
 
-                        Console.WriteLine($"Available dates for month {month}:");
-                        foreach (var date in filteredDates)
-                        {
-                            Console.WriteLine(date);
-                        }
+                string bookingInput = string.Empty;
+
+                while (true)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("Press Enter to start the booking: ");
+                    bookingInput = Console.ReadLine();
+
+                    if (string.IsNullOrEmpty(bookingInput))
+                    {
+                        break;
                     }
                     else
                     {
-                        Console.WriteLine("Invalid month. Please enter a number between 1 and 12.");
+                        Console.WriteLine();
+                        Console.WriteLine("Invalid input. Please press Enter to start the booking.");
                     }
                 }
-                else if (filterChoice == "N")
+
+                Console.WriteLine();
+                Console.WriteLine("Car Details:");
+                Console.WriteLine($"{"License Plate:",-14} {selectedCar.LicensePlate,-9} {"Make:",-5} {selectedCar.CarMake,-15} {"Model:",-6} {selectedCar.Model,-9} {"Year:",-5} {selectedCar.Year,-6} {"Mileage:",-8} {selectedCar.Mileage,-14} {"Availability:",-13} {selectedCar.Availability}");
+
+                var availableDates = selectedCar.AvailableDates.Except(selectedCar.UnavailableDates).ToList();
+                var originalAvailableDates = new List<string>(availableDates);
+                var originalUnavailableDates = new List<string>(selectedCar.UnavailableDates);
+
+                Console.WriteLine();
+                Console.WriteLine("Available Dates:");
+                foreach (var date in availableDates)
                 {
-                    string startDateTime = "";
-                    string endDateTime = "";
+                    Console.WriteLine(date);
+                }
 
-                    while (true)
+                bool filteringCompleted = false;
+                while (!filteringCompleted)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("Do you want to filter the available time slots by selecting a specific month? ‘Y’ or ‘N’");
+                    string filterChoice = Console.ReadLine().Trim().ToUpper();
+                    Console.WriteLine();
+
+                    if (filterChoice == "Y")
                     {
-                        Console.WriteLine("Please enter the start date and time slot for your booking (yyyy-MM-dd, hh:mm tt): ");
-                        startDateTime = Console.ReadLine();
+                        Console.WriteLine("Enter the month (1-12) you want to filter:");
+                        if (int.TryParse(Console.ReadLine(), out int month) && month >= 1 && month <= 12)
+                        {
+                            var filteredDates = availableDates.Where(date => DateTime.TryParse(date, out DateTime dt) && dt.Month == month).ToList();
 
-                        if (availableDates.Contains(startDateTime) && !selectedCar.UnavailableDates.Contains(startDateTime))
+                            Console.WriteLine($"Available dates for month {month}:");
+                            foreach (var date in filteredDates)
+                            {
+                                Console.WriteLine(date);
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Invalid month. Please enter a number between 1 and 12.");
+                        }
+                    }
+                    else if (filterChoice == "N")
+                    {
+                        filteringCompleted = true;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid choice. Please enter 'Y' for yes or 'N' for no.");
+                    }
+                }
+
+                string startDateTime = "";
+                string endDateTime = "";
+
+                while (true)
+                {
+                    Console.WriteLine("Please enter the start date and time slot for your booking (yyyy-MM-dd hh:mm tt): ");
+                    startDateTime = Console.ReadLine();
+
+                    if (availableDates.Contains(startDateTime) && !selectedCar.UnavailableDates.Contains(startDateTime) && availableDates.IndexOf(startDateTime) != availableDates.Count - 1)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid start date and time or it is unavailable, or it is the last available date. Please try again.");
+                    }
+                }
+
+                while (true)
+                {
+                    Console.WriteLine("Please enter the end date and time slot for your booking (yyyy-MM-dd hh:mm tt): ");
+                    endDateTime = Console.ReadLine();
+
+                    if (availableDates.Contains(endDateTime) && !selectedCar.UnavailableDates.Contains(endDateTime) && availableDates.IndexOf(endDateTime) != 0)
+                    {
+                        DateTime startDate = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null);
+                        DateTime endDate = DateTime.ParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null);
+
+                        if (endDate > startDate)
                         {
                             break;
                         }
                         else
                         {
-                            Console.WriteLine("Invalid start date and time or it is unavailable. Please try again.");
+                            Console.WriteLine("End date and time must be after the start date and time. Please try again.");
                         }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid end date and time or it is unavailable, or it is the first available date. Please try again.");
+                    }
+                }
+
+                int startIndex = availableDates.FindIndex(date => date == startDateTime);
+                int endIndex = availableDates.FindIndex(date => date == endDateTime);
+
+                if (startIndex != -1 && endIndex != -1 && startIndex <= endIndex)
+                {
+                    for (int i = startIndex; i <= endIndex; i++)
+                    {
+                        selectedCar.UnavailableDates.Add(availableDates[i]);
+                    }
+
+                    availableDates.RemoveRange(startIndex, endIndex - startIndex + 1);
+                }
+
+                Console.WriteLine();
+                Console.WriteLine("Do you want to pick up the car yourself or have it delivered? Enter 'P' for pickup or 'D' for delivery: ");
+                string pickupOrDelivery = Console.ReadLine().Trim().ToUpper();
+
+                PickUpMethod pickUpMethod = null;
+                decimal deliveryFee = 0;
+
+                if (pickupOrDelivery == "P")
+                {
+                    Pickup selfpickup = new Pickup
+                    {
+                        DateTimePickup = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null)
+                    };
+
+                    var locations = ReadLocationsFromCsv("iCar_Locations.csv");
+
+                    Console.WriteLine("List of Pickup Locations:");
+                    for (int i = 0; i < locations.Count; i++)
+                    {
+                        Console.WriteLine($"{i + 1}. {locations[i]}");
                     }
 
                     while (true)
                     {
-                        Console.WriteLine("Please enter the end date and time slot for your booking (yyyy-MM-dd hh:mm tt): ");
-                        endDateTime = Console.ReadLine();
-
-                        if (availableDates.Contains(endDateTime) && !selectedCar.UnavailableDates.Contains(endDateTime))
+                        Console.WriteLine("Enter the number of the location where you want to pick up the car: ");
+                        if (int.TryParse(Console.ReadLine(), out int locationIndex) && locationIndex >= 1 && locationIndex <= locations.Count)
                         {
-                            DateTime startDate = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null);
-                            DateTime endDate = DateTime.ParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null);
+                            selfpickup.PickupLocation = locations[locationIndex - 1];
+                            pickUpMethod = selfpickup;
+                            break;
+                        }
+                        else
+                        {
+                            Console.WriteLine("Invalid location number. Please try again.");
+                        }
+                    }
 
-                            if (endDate > startDate)
+                }
+                else if (pickupOrDelivery == "D")
+                {
+                    DeliverCar delivery = new DeliverCar
+                    {
+                        DateTimeDeliver = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null)
+                    };
+
+                    while (true)
+                    {
+                        Console.WriteLine("Enter the delivery location in this format: Postal Code, Address, Country: ");
+                        string deliveryLocation = Console.ReadLine();
+
+                        string[] parts = deliveryLocation.Split(',');
+                        if (parts.Length == 3 && parts[2].Trim().Equals("Singapore", StringComparison.OrdinalIgnoreCase))
+                        {
+                            string postalCode = parts[0].Trim();
+
+                            if (postalCode.Length == 6 && postalCode.All(char.IsDigit))
                             {
+                                delivery.DeliveryLocation = deliveryLocation;
+                                pickUpMethod = delivery;
+                                deliveryFee += 10;
                                 break;
                             }
                             else
                             {
-                                Console.WriteLine("End date and time must be after the start date and time. Please try again.");
+                                Console.WriteLine("Invalid postal code. It must be exactly 6 digits long and contain only numbers. Please try again.");
                             }
                         }
                         else
                         {
-                            Console.WriteLine("Invalid end date and time or it is unavailable. Please try again.");
+                            Console.WriteLine("Invalid location. Ensure the country is 'Singapore' and the format is correct. Please try again.");
                         }
                     }
-
-                    int startIndex = availableDates.FindIndex(date => date == startDateTime);
-                    int endIndex = availableDates.FindIndex(date => date == endDateTime);
-
-                    if (startIndex != -1 && endIndex != -1 && startIndex <= endIndex)
-                    {
-                        for (int i = startIndex; i <= endIndex; i++)
-                        {
-                            selectedCar.UnavailableDates.Add(availableDates[i]);
-                        }
-
-                        availableDates.RemoveRange(startIndex, endIndex - startIndex + 1);
-                    }
-
-                    Console.WriteLine();
-                    Console.WriteLine("Do you want to pick up the car yourself or have it delivered? Enter 'P' for pickup or 'D' for delivery: ");
-                    string pickupOrDelivery = Console.ReadLine().Trim().ToUpper();
-
-                    PickUpMethod pickUpMethod = null;
-
-                    if (pickupOrDelivery == "P")
-                    {
-                        Pickup selfpickup = new Pickup
-                        {
-                            DateTimePickup = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null)
-                        };
-
-                        var locations = ReadLocationsFromCsv("iCar_Locations.csv");
-
-                        Console.WriteLine("List of Pickup Locations:");
-                        for (int i = 0; i < locations.Count; i++)
-                        {
-                            Console.WriteLine($"{i + 1}. {locations[i]}");
-                        }
-
-                        while (true)
-                        {
-                            Console.WriteLine("Enter the number of the location where you want to pick up the car: ");
-                            if (int.TryParse(Console.ReadLine(), out int locationIndex) && locationIndex >= 1 && locationIndex <= locations.Count)
-                            {
-                                selfpickup.PickupLocation = locations[locationIndex - 1];
-                                pickUpMethod = selfpickup;
-                                break;
-                            }
-                            else
-                            {
-                                Console.WriteLine("Invalid location number. Please try again.");
-                            }
-                        }
-
-                    }
-                    else if (pickupOrDelivery == "D")
-                    {
-                        DeliverCar delivery = new DeliverCar
-                        {
-                            DateTimeDeliver = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null)
-                        };
-
-                        while (true)
-                        {
-                            Console.WriteLine("Enter the delivery location in this format: Postal Code, Address, Country: ");
-                            string deliveryLocation = Console.ReadLine();
-
-                            string[] parts = deliveryLocation.Split(',');
-                            if (parts.Length == 3 && parts[2].Trim().Equals("Singapore", StringComparison.OrdinalIgnoreCase))
-                            {
-                                delivery.DeliveryLocation = deliveryLocation;
-                                pickUpMethod = delivery;
-                                break;
-                            }
-                            else
-                            {
-                                Console.WriteLine("Invalid location. Ensure the country is 'Singapore'. Please try again.");
-                            }
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("Invalid choice. Please enter 'P' for pickup or 'D' for delivery.");
-                        return;
-                    }
-
-                    Console.WriteLine();
-                    Console.WriteLine("Do you want to return the car yourself or have it picked up? Enter 'S' for self-return or 'D' for delivery return: ");
-                    string returnMethodChoice = Console.ReadLine().Trim().ToUpper();
-
-                    ReturnMethod returnMethod = null;
-
-                    if (returnMethodChoice == "S")
-                    {
-                        SelfReturn selfReturn = new SelfReturn
-                        {
-                            DateTimeReturn = DateTime.ParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null)
-                        };
-
-                        Console.WriteLine("Please select a return location:");
-
-                        var locations = ReadLocationsFromCsv("iCar_Locations.csv");
-
-                        for (int i = 0; i < locations.Count; i++)
-                        {
-                            Console.WriteLine($"{i + 1}. {locations[i]}");
-                        }
-
-                        while (true)
-                        {
-                            Console.WriteLine("Enter the number of the location where you want to return the car: ");
-                            if (int.TryParse(Console.ReadLine(), out int locationIndex) && locationIndex >= 1 && locationIndex <= locations.Count)
-                            {
-                                selfReturn.ICarReturnLocation = locations[locationIndex - 1];
-                                returnMethod = selfReturn;
-                                break;
-                            }
-                            else
-                            {
-                                Console.WriteLine("Invalid location number. Please try again.");
-                            }
-                        }
-                    }
-                    else if (returnMethodChoice == "D")
-                    {
-                        DeliveryReturn deliveryReturn = new DeliveryReturn
-                        {
-                            DateTimeReturnDelivery = DateTime.ParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null),
-                            AdditionalCharge = new AdditionalCharge() // Set any additional charges if applicable
-                        };
-
-                        while (true)
-                        {
-                            Console.WriteLine("Enter the return delivery location in this format: Postal Code, Address, Country: ");
-                            string returnLocation = Console.ReadLine();
-
-                            string[] parts = returnLocation.Split(',');
-                            if (parts.Length == 3 && parts[2].Trim().Equals("Singapore", StringComparison.OrdinalIgnoreCase))
-                            {
-                                deliveryReturn.ReturnLocation = returnLocation;
-                                returnMethod = deliveryReturn;
-                                break;
-                            }
-                            else
-                            {
-                                Console.WriteLine("Invalid location. Ensure the country is 'Singapore'. Please try again.");
-                            }
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("Invalid choice. Please enter 'S' for self-return or 'D' for delivery return.");
-                        return;
-                    }
-
-                    Booking booking = new Booking
-                    {
-                        BookingId = Guid.NewGuid().ToString(), 
-                        StartDate = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null),
-                        EndDate = DateTime.ParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null),
-                        Status = "Confirmed",
-                        PickUpMethod = pickUpMethod,
-                        ReturnMethod = returnMethod,
-                        Payment = new Payment(),
-                        Car = selectedCar
-                    };
-
-                    Console.WriteLine();
-                    Console.WriteLine("Booking Completed Successfully!");
-
-                    Console.WriteLine("Booking Details:");
-                    Console.WriteLine($"Car License Plate: {selectedCar.LicensePlate}");
-                    Console.WriteLine($"Booking Start Date and Time: {startDateTime}");
-                    Console.WriteLine($"Booking End Date and Time: {endDateTime}");
-
-                    if (pickUpMethod is Pickup pickup)
-                    {
-                        Console.WriteLine($"Pickup Method: Self-Pickup");
-                        Console.WriteLine($"Pickup Date and Time: {pickup.DateTimePickup}");
-                        Console.WriteLine($"Pickup Location: {pickup.PickupLocation}");
-                    }
-                    else if (pickUpMethod is DeliverCar deliverCar)
-                    {
-                        Console.WriteLine($"Pickup Method: Delivery");
-                        Console.WriteLine($"Delivery Date and Time: {deliverCar.DateTimeDeliver}");
-                        Console.WriteLine($"Delivery Location: {deliverCar.DeliveryLocation}");
-                    }
-
-                    if (returnMethod is SelfReturn selfReturnMethod)
-                    {
-                        Console.WriteLine($"Return Method: Self-Return");
-                        Console.WriteLine($"Return Date and Time: {selfReturnMethod.DateTimeReturn}");
-                        Console.WriteLine($"Return Location: {selfReturnMethod.ICarReturnLocation}");
-                    }
-                    else if (returnMethod is DeliveryReturn deliveryReturnMethod)
-                    {
-                        Console.WriteLine($"Return Method: Delivery Return");
-                        Console.WriteLine($"Return Date and Time: {deliveryReturnMethod.DateTimeReturnDelivery}");
-                        Console.WriteLine($"Return Location: {deliveryReturnMethod.ReturnLocation}");
-                    }
-
-                    break;
                 }
                 else
                 {
-                    Console.WriteLine("Invalid choice. Please enter 'Y' for yes or 'N' for no.");
+                    Console.WriteLine("Invalid choice. Please enter 'P' for pickup or 'D' for delivery.");
+                    return;
+                }
+
+                Console.WriteLine();
+                Console.WriteLine("Do you want to return the car yourself or have it picked up? Enter 'S' for self-return or 'D' for delivery return: ");
+                string returnMethodChoice = Console.ReadLine().Trim().ToUpper();
+
+                ReturnMethod returnMethod = null;
+
+                if (returnMethodChoice == "S")
+                {
+                    SelfReturn selfReturn = new SelfReturn
+                    {
+                        DateTimeReturn = DateTime.ParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null)
+                    };
+
+                    Console.WriteLine("Please select a return location:");
+
+                    var locations = ReadLocationsFromCsv("iCar_Locations.csv");
+
+                    for (int i = 0; i < locations.Count; i++)
+                    {
+                        Console.WriteLine($"{i + 1}. {locations[i]}");
+                    }
+
+                    while (true)
+                    {
+                        Console.WriteLine("Enter the number of the location where you want to return the car: ");
+                        if (int.TryParse(Console.ReadLine(), out int locationIndex) && locationIndex >= 1 && locationIndex <= locations.Count)
+                        {
+                            selfReturn.ICarReturnLocation = locations[locationIndex - 1];
+                            returnMethod = selfReturn;
+                            break;
+                        }
+                        else
+                        {
+                            Console.WriteLine("Invalid location number. Please try again.");
+                        }
+                    }
+                }
+                else if (returnMethodChoice == "D")
+                {
+                    DeliveryReturn deliveryReturn = new DeliveryReturn
+                    {
+                        DateTimeReturnDelivery = DateTime.ParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null),
+                        AdditionalCharge = new AdditionalCharge() 
+                    };
+
+                    while (true)
+                    {
+                        Console.WriteLine("Enter the return delivery location in this format: Postal Code, Address, Country: ");
+                        string returnLocation = Console.ReadLine();
+
+                        string[] parts = returnLocation.Split(',');
+                        if (parts.Length == 3 && parts[2].Trim().Equals("Singapore", StringComparison.OrdinalIgnoreCase))
+                        {
+                            string postalCode = parts[0].Trim();
+
+                            if (postalCode.Length == 6 && postalCode.All(char.IsDigit))
+                            {
+                                deliveryReturn.ReturnLocation = returnLocation;
+                                returnMethod = deliveryReturn;
+                                deliveryFee += 10;
+                                break;
+                            }
+                            else
+                            {
+                                Console.WriteLine("Invalid postal code. It must be exactly 6 digits long and contain only numbers. Please try again.");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Invalid location. Ensure the country is 'Singapore' and the format is correct. Please try again.");
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Invalid choice. Please enter 'S' for self-return or 'D' for delivery return.");
+                    return;
+                }
+
+                DateTime startTime = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null);
+                DateTime endTime = DateTime.ParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null);
+                TimeSpan duration = endTime - startTime;
+                decimal totalHours = (decimal)duration.TotalHours;
+                decimal totalCharge = totalHours * (decimal)selectedCar.Charge;
+                decimal totalDeliveryFee = deliveryFee;
+
+                Console.WriteLine();
+                Console.WriteLine("Booking successfully made!");
+                Console.WriteLine();
+
+                Console.WriteLine("Booking Details:");
+                Console.WriteLine($"Car License Plate: {selectedCar.LicensePlate}");
+                Console.WriteLine($"Booking Start Date and Time: {startDateTime}");
+                Console.WriteLine($"Booking End Date and Time: {endDateTime}");
+                Console.WriteLine();
+
+                if (pickUpMethod is Pickup pickup)
+                {
+                    Console.WriteLine("Pickup & Return");
+                    Console.WriteLine($"Pickup Method: Self-Pickup");
+                    Console.WriteLine($"Pickup Date and Time: {pickup.DateTimePickup}");
+                    Console.WriteLine($"Pickup Location: {pickup.PickupLocation}");
+                }
+                else if (pickUpMethod is DeliverCar deliverCar)
+                {
+                    Console.WriteLine("Pickup & Return");
+                    Console.WriteLine($"Pickup Method: Delivery");
+                    Console.WriteLine($"Delivery Date and Time: {deliverCar.DateTimeDeliver}");
+                    Console.WriteLine($"Delivery Location: {deliverCar.DeliveryLocation}");
+                }
+
+                if (returnMethod is SelfReturn selfReturnMethod)
+                {
+                    Console.WriteLine($"Return Method: Self-Return");
+                    Console.WriteLine($"Return Date and Time: {selfReturnMethod.DateTimeReturn}");
+                    Console.WriteLine($"Return Location: {selfReturnMethod.ICarReturnLocation}");
+                }
+                else if (returnMethod is DeliveryReturn deliveryReturnMethod)
+                {
+                    Console.WriteLine($"Return Method: Delivery Return");
+                    Console.WriteLine($"Return Date and Time: {deliveryReturnMethod.DateTimeReturnDelivery}");
+                    Console.WriteLine($"Return Location: {deliveryReturnMethod.ReturnLocation}");
+                }
+
+                Console.WriteLine("Amount to pay");
+                Console.WriteLine($"Total Charge: {totalCharge:C}");
+                Console.WriteLine($"Total Delivery Fee: {totalDeliveryFee:C}");
+                Console.WriteLine($"Final Total: {(totalCharge + totalDeliveryFee):C}");
+
+                while (true)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("Would you like to: [C]onfirm the booking, [R]edo the booking, or [E]xit and cancel the booking?");
+                    string choice = Console.ReadLine().ToUpper();
+
+                    if (choice == "C")
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine("Booking Confirmed!");
+                        Booking booking = new Booking
+                        {
+                            BookingId = Guid.NewGuid().ToString(),
+                            StartDate = startTime,
+                            EndDate = endTime,
+                            Status = "Confirmed",
+                            PickUpMethod = pickUpMethod,
+                            ReturnMethod = returnMethod,
+                            Payment = new Payment(),
+                            Car = selectedCar
+                        };
+                        redoBooking = false;
+                        break;
+                    }
+                    else if (choice == "R")
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine("Redoing the booking...");
+                        selectedCar.AvailableDates = new List<string>(originalAvailableDates);
+                        selectedCar.UnavailableDates = new List<string>(originalUnavailableDates);
+                        redoBooking = true;
+                        break;
+                    }
+                    else if (choice == "E")
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine("Booking Canceled. Exiting.");
+                        selectedCar.AvailableDates = new List<string>(originalAvailableDates);
+                        selectedCar.UnavailableDates = new List<string>(originalUnavailableDates);
+                        redoBooking = false;
+                        return;
+                    }
+                    else
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine("Invalid choice. Please enter 'C', 'R', or 'E'.");
+                    }
                 }
             }
         }
