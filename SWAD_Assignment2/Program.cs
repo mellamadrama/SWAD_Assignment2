@@ -145,7 +145,7 @@ static Dictionary<string, List<string>> LoadPhotoListFromCSV(string photoCsvFile
 {
     var photoList = new Dictionary<string, List<string>>();
 
-    foreach (var line in File.ReadLines(photoCsvFilePath).Skip(1)) 
+    foreach (var line in File.ReadLines(photoCsvFilePath).Skip(1))
     {
         var values = line.Split(',');
         string licensePlate = values[0].Trim();
@@ -360,14 +360,14 @@ if (user != null)
                     break;
             }
         }
-        static void ViewCars(List<Car> cars, Car_Owner carOwner) 
+        static void ViewCars(List<Car> cars, Car_Owner carOwner)
         {
             var ownerCars = cars.Where(c => c.CarOwnerId == carOwner.Id).ToList();
             Console.WriteLine();
             Console.WriteLine("====Cars Owned====");
             foreach (var car in ownerCars)
             {
-                Console.WriteLine($"{"License Plate:",-14} {car.LicensePlate,-9} {"Make:",-5} {car.CarMake,-15} {"Model:",-6} {car.Model,-9} {"Year:",-5} {car.Year,-6} {"Mileage:",-8} {car.Mileage} {"Availability:", -15} {car.Availability} {"Insurance Status:", -5} {car.InsuranceStatus}");
+                Console.WriteLine($"{"License Plate:",-14} {car.LicensePlate,-9} {"Make:",-5} {car.CarMake,-15} {"Model:",-6} {car.Model,-9} {"Year:",-5} {car.Year,-6} {"Mileage:",-8} {car.Mileage} {"Availability:",-15} {car.Availability} {"Insurance Status:",-5} {car.InsuranceStatus}");
             }
         }
 
@@ -511,7 +511,7 @@ if (user != null)
 
             Console.WriteLine();
             Console.WriteLine("========Please upload images of the car!========");
-            
+
             string photoFile;
             while (true)
             {
@@ -552,7 +552,7 @@ if (user != null)
             Console.WriteLine();
             Console.WriteLine("====Set Hourly Charge ($)====");
             float charge;
-            while(true)
+            while (true)
             {
                 Console.Write("Enter Hourly Charge ($): ");
                 string Charge = Console.ReadLine();
@@ -571,7 +571,7 @@ if (user != null)
                     Console.WriteLine("Invalid input. Please enter a valid number.");
                 }
             }
-            
+
             // Check if car plate number exists in the insuranceList
             string insuranceStatus = insuranceList.Any(i => i.CarPlateNo == carPlateNo) ? "Y" : "X";
 
@@ -681,7 +681,7 @@ if (user != null)
                     user = login();
                     displayUserDetails(user);
                     break;
-                case "7": 
+                case "7":
                     MakePayment();
                     break;
                 case "0":
@@ -691,6 +691,37 @@ if (user != null)
                     Console.WriteLine("Invalid choice. Please try again.");
                     break;
             }
+        }
+
+        static bool IsBookingTimeValid(string startDateTime, string endDateTime, Car selectedCar)
+        {
+            DateTime startDate, endDate;
+
+            if (!DateTime.TryParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null, DateTimeStyles.None, out startDate) ||
+                !DateTime.TryParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null, DateTimeStyles.None, out endDate))
+            {
+                return false; // Invalid date format
+            }
+
+            if (startDate >= endDate)
+            {
+                return false; // Start date must be before end date
+            }
+
+            // Check if the booking range intersects with any unavailable dates
+            foreach (var date in selectedCar.UnavailableDates)
+            {
+                DateTime unavailableDate;
+                if (DateTime.TryParseExact(date, "yyyy-MM-dd hh:mm tt", null, DateTimeStyles.None, out unavailableDate))
+                {
+                    if (unavailableDate >= startDate && unavailableDate < endDate)
+                    {
+                        return false; // Booking range intersects with an unavailable date
+                    }
+                }
+            }
+
+            return true; // Booking range is available
         }
 
         void BookCar(List<Car> cars)
@@ -799,41 +830,57 @@ if (user != null)
 
                 while (true)
                 {
-                    Console.WriteLine("Please enter the start date and time slot for your booking (yyyy-MM-dd hh:mm tt): ");
-                    startDateTime = Console.ReadLine();
-
-                    if (availableDates.Contains(startDateTime) && !selectedCar.UnavailableDates.Contains(startDateTime) && availableDates.IndexOf(startDateTime) != availableDates.Count - 1)
+                    while (true)
                     {
-                        break;
-                    }
-                    else
-                    {
-                        Console.WriteLine("Invalid start date and time or it is unavailable, or it is the last available date. Please try again.");
-                    }
-                }
+                        Console.WriteLine("Please enter the start date and time slot for your booking (yyyy-MM-dd hh:mm tt): ");
+                        startDateTime = Console.ReadLine();
 
-                while (true)
-                {
-                    Console.WriteLine("Please enter the end date and time slot for your booking (yyyy-MM-dd hh:mm tt): ");
-                    endDateTime = Console.ReadLine();
-
-                    if (availableDates.Contains(endDateTime) && !selectedCar.UnavailableDates.Contains(endDateTime) && availableDates.IndexOf(endDateTime) != 0)
-                    {
-                        DateTime startDate = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null);
-                        DateTime endDate = DateTime.ParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null);
-
-                        if (endDate > startDate)
-                        {     
+                        if (!selectedCar.UnavailableDates.Contains(startDateTime) && availableDates.IndexOf(startDateTime) != availableDates.Count - 1)
+                        {
                             break;
                         }
                         else
                         {
-                            Console.WriteLine("End date and time must be after the start date and time. Please try again.");
+                            Console.WriteLine("Invalid start date and time or it is unavailable, or it is the last available date. Please try again.");
                         }
+                    }
+
+                    while (true)
+                    {
+                        Console.WriteLine("Please enter the end date and time slot for your booking (yyyy-MM-dd hh:mm tt): ");
+                        endDateTime = Console.ReadLine();
+
+                        if (!selectedCar.UnavailableDates.Contains(endDateTime) && availableDates.IndexOf(endDateTime) != 0)
+                        {
+                            DateTime startDate = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null);
+                            DateTime endDate = DateTime.ParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null);
+
+                            if (endDate > startDate)
+                            {
+                                break;
+                            }
+                            else
+                            {
+                                Console.WriteLine("End date and time must be after the start date and time. Please try again.");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Invalid end date and time or it is unavailable, or it is the first available date. Please try again.");
+                        }
+                    }
+
+                    if (IsBookingTimeValid(startDateTime, endDateTime, selectedCar))
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine("Booking date is valid.");
+                        break;
                     }
                     else
                     {
-                        Console.WriteLine("Invalid end date and time or it is unavailable, or it is the first available date. Please try again.");
+                        Console.WriteLine();
+                        Console.WriteLine("Invalid booking range or it intersects with an unavailable date.");
+                        Console.WriteLine();
                     }
                 }
 
@@ -971,7 +1018,7 @@ if (user != null)
                     DeliveryReturn deliveryReturn = new DeliveryReturn
                     {
                         DateTimeReturnDelivery = DateTime.ParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null),
-                        AdditionalCharge = new AdditionalCharge() 
+                        AdditionalCharge = new AdditionalCharge()
                     };
 
                     while (true)
@@ -1057,14 +1104,13 @@ if (user != null)
                 Console.WriteLine($"Total Charge: {totalCharge:C}");
                 Console.WriteLine($"Total Delivery Fee: {totalDeliveryFee:C}");
                 Console.WriteLine($"Final Total: {(totalCharge + totalDeliveryFee):C}");
+                AdditionalCharge additionalCharge = new AdditionalCharge(0, 0, totalDeliveryFee);
 
                 while (true)
                 {
                     Console.WriteLine();
                     Console.WriteLine("Would you like to: [C]onfirm the booking, [R]edo the booking, or [E]xit and cancel the booking?");
                     string choice = Console.ReadLine().ToUpper();
-
-                    AdditionalCharge additionalCharge = new AdditionalCharge(0,0, totalDeliveryFee);
 
                     if (choice == "C")
                     {
@@ -1177,7 +1223,8 @@ else
 }
 
 // display 
-void displayRenterMainMenu() {
+void displayRenterMainMenu()
+{
     Console.WriteLine();
     Console.WriteLine("1. Book a Car");
     Console.WriteLine("2. View Booking History");
@@ -1248,9 +1295,9 @@ void returnCar()
 
 // return to iCar Station
 void returnToiCarStation()
-{ 
+{
     double totalReturnFee = 0;
-    Booking booking = getOngoingBooking((Renter)user); 
+    Booking booking = getOngoingBooking((Renter)user);
     SelfReturn returnMethod = new SelfReturn();
     DateTime retDateTime = DateTime.Now;
     returnMethod.DateTimeReturn = retDateTime;
@@ -1304,7 +1351,7 @@ double calculatePenaltyFee(DateTime retDateTime, DateTime endDate, Booking ongoi
     TimeSpan overTime = retDateTime - endDate;
     double totalFee = ongoingBooking.Payment.TotalFee; //get current total cost of booking
     penaltyFee = totalFee * 0.20 * overTime.Hours;
-    penaltyFee =Math.Round(penaltyFee, 2);
+    penaltyFee = Math.Round(penaltyFee, 2);
     return penaltyFee;
 }
 
@@ -1488,7 +1535,7 @@ void PickUpCar(Renter user)
         }
     }
 
-    return (null, 0); 
+    return (null, 0);
 }
 
 // send receipt method
@@ -1519,7 +1566,8 @@ void sendReceipt(Renter user)
 }
 
 // display current booking details
-void displayBooking(Booking currentBooking) {
+void displayBooking(Booking currentBooking)
+{
     DateTime startTime = currentBooking.StartDate;
     DateTime endTime = currentBooking.EndDate;
 
