@@ -777,7 +777,7 @@ if (user != null)
 
                     if (pickupOrDelivery == "P")
                     {
-                        Pickup pickup = new Pickup
+                        Pickup selfpickup = new Pickup
                         {
                             DateTimePickup = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null)
                         };
@@ -795,8 +795,8 @@ if (user != null)
                             Console.WriteLine("Enter the number of the location where you want to pick up the car: ");
                             if (int.TryParse(Console.ReadLine(), out int locationIndex) && locationIndex >= 1 && locationIndex <= locations.Count)
                             {
-                                pickup.PickupLocation = locations[locationIndex - 1];
-                                pickUpMethod = pickup;
+                                selfpickup.PickupLocation = locations[locationIndex - 1];
+                                pickUpMethod = selfpickup;
                                 break;
                             }
                             else
