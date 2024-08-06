@@ -723,6 +723,7 @@ if (user != null)
                     }
                 }
 
+                // This is where Make Booking begins
                 string bookingInput = string.Empty;
 
                 while (true)
