@@ -1272,7 +1272,7 @@ if (user != null)
         void returnToiCarStation()
         {
             double totalReturnFee = 0;
-            Booking booking = getOngoingBooking((Renter)user);
+            Booking booking = getOngoingBooking(renter);
             if (booking != null)
             {
                 if (booking.ReturnMethod is SelfReturn selfReturn)
