@@ -483,11 +483,11 @@ if (user != null)
             {
                 Console.Write("Enter Car Year: ");
                 string yearInput = Console.ReadLine();
-                if (int.TryParse(yearInput, out year) && year > 1885 && year <= DateTime.Now.Year)
+                if (int.TryParse(yearInput, out year) && year > 1980 && year <= DateTime.Now.Year)
                 {
                     break;
                 }
-                Console.WriteLine($"Invalid input. Car Year must be between 1886 and {DateTime.Now.Year}.");
+                Console.WriteLine($"Invalid input. Car Year must be between 1980 and {DateTime.Now.Year}.");
             }
 
             // Validate Car Mileage
@@ -583,7 +583,7 @@ if (user != null)
             Console.WriteLine($"Year: {year}");
             Console.WriteLine($"Car Mileage: {carMileage}");
             Console.WriteLine($"Availability: {availability}");
-            Console.WriteLine($"Hourly Charge: ${charge}");
+            Console.WriteLine($"Hourly Charge: ${charge:F2}");
             if (insuranceStatus == "Y")
             {
                 Console.WriteLine($"Insurance Status: {insuranceStatus}");
@@ -598,12 +598,16 @@ if (user != null)
                 }
                 else
                 {
+                    Console.WriteLine();
+                    Console.WriteLine("====Insurance Company Details====");
                     Console.WriteLine("No insurance details found for this car plate number.");
                 }
             }
             else
             {
                 Console.WriteLine($"Insurance Status: {insuranceStatus}");
+                Console.WriteLine();
+                Console.WriteLine("====Insurance Company Details====");
                 Console.WriteLine("No insurance details found for this car plate number.");
             }
 
