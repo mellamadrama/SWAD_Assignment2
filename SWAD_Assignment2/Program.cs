@@ -350,7 +350,7 @@ if (user != null)
                     ViewCars(cars, carOwner);
                     break;
                 case "2":
-                    RegisterCar(cars, insuranceList, carMakes);
+                    RegisterCar(cars, insuranceList, carMakes, carOwner);
                     break;
                 case "3":
                     Console.WriteLine("Goodbye!");
@@ -409,7 +409,7 @@ if (user != null)
             }
         }
 
-        static void RegisterCar(List<Car> cars, List<Insurance> insuranceList, List<string> carMakes)
+        static void RegisterCar(List<Car> cars, List<Insurance> insuranceList, List<string> carMakes, Car_Owner carOwner)
         {
             Console.WriteLine();
 
@@ -430,7 +430,7 @@ if (user != null)
                         string response = Console.ReadLine().Trim().ToLower();
                         if (response == "exit")
                         {
-                            break;
+                            return;
                         }
                         else if (response == "edit")
                         {
@@ -590,6 +590,8 @@ if (user != null)
                 var insurance = insuranceList.FirstOrDefault(i => i.CarPlateNo == carPlateNo);
                 if (insurance != null)
                 {
+                    Console.WriteLine();
+                    Console.WriteLine("====Insurance Company Details====");
                     Console.WriteLine($"Insurance Company: {insurance.CompanyName}");
                     Console.WriteLine($"Branch Number: {insurance.BranchNo}");
                     Console.WriteLine($"Expiry Date: {insurance.ExpiryDate.ToShortDateString()}");
@@ -605,6 +607,7 @@ if (user != null)
                 Console.WriteLine("No insurance details found for this car plate number.");
             }
 
+            Console.WriteLine();
             Console.WriteLine("====Uploaded photos:====");
             foreach (var file in photoFiles)
             {
@@ -622,6 +625,7 @@ if (user != null)
                 {
                     var newCar = new Car
                     {
+                        CarOwnerId = carOwner.Id,
                         LicensePlate = carPlateNo,
                         CarMake = carMake,
                         Model = carModel,
@@ -661,7 +665,14 @@ if (user != null)
             switch (choice)
             {
                 case "1":
-                    browseCars();
+                    if (renter.Bookings.All(booking => booking.Status != "Confirmed"))
+                    {
+                        BrowseCars();
+                    }
+                    else
+                    {
+                        Console.WriteLine("Only one ongoing booking can be made at a time!");
+                    }
                     break;
                 case "2":
                     ViewBookingHistory(renter);
@@ -670,7 +681,7 @@ if (user != null)
                     ViewPaymentHistory(renter);
                     break;
                 case "4":
-                    returnCar();
+                    returnCar(renter);
                     break;
                 case "5":
                     PickUpCar(renter);
@@ -724,7 +735,7 @@ if (user != null)
             return true; // Booking range is available
         }
 
-        void browseCars()
+        void BrowseCars()
         {
             Console.WriteLine();
             Console.WriteLine("List of Cars to Rent:");
@@ -794,12 +805,10 @@ if (user != null)
                     count += 1;
                 }
 
-                Console.WriteLine(count);
-
                 if (count < 3)
                 {
                     Console.WriteLine("No valid booking dates available. Redirecting to browse cars.");
-                    browseCars();
+                    BrowseCars();
                     return;
                 }
 
@@ -1141,7 +1150,7 @@ if (user != null)
                             BookingId = Guid.NewGuid().ToString(),
                             StartDate = startTime,
                             EndDate = endTime,
-                            Status = "Confirmed",
+                            Status = "Pending",
                             PickUpMethod = pickUpMethod,
                             ReturnMethod = returnMethod,
                             Payment = new Payment(DateTime.Now, totalCharge, additionalCharge),
@@ -1296,7 +1305,7 @@ void display(string message)
 }
 
 //return car
-void returnCar()
+void returnCar(Renter user)
 {
     Console.WriteLine("Select: \n[1] Return to iCar Station \n[2] Return from Desired Location");
     string option = Console.ReadLine();
@@ -1319,35 +1328,54 @@ void returnToiCarStation()
 {
     double totalReturnFee = 0;
     Booking booking = getOngoingBooking((Renter)user);
-    SelfReturn returnMethod = new SelfReturn();
-    DateTime retDateTime = DateTime.Now;
-    returnMethod.DateTimeReturn = retDateTime;
-    booking.ReturnMethod = returnMethod;
-    DateTime endDate = booking.EndDate;
-    if (retDateTime > endDate)
+    if (booking != null)
     {
-        double penaltyFee = calculatePenaltyFee(retDateTime, endDate, booking);
-        totalReturnFee += penaltyFee;
-        booking.updatePenaltyFee(penaltyFee);
-        string PenaltyFee = "Penalty Fee for late return: " + penaltyFee;
-        display(PenaltyFee);
-    }
-    string damages = promptCheckForDamages();
-    updateDamages(damages);
-    if (totalReturnFee > 0)
-    {
-        booking.updateTotalFees(totalReturnFee);
+        if (booking.ReturnMethod is SelfReturn selfReturn)
+        {
+            DateTime retDateTime = DateTime.Now;
+            selfReturn.DateTimeReturn = retDateTime;
+            DateTime endDate = booking.EndDate;
+            if (retDateTime > endDate)
+            {
+                double penaltyFee = calculatePenaltyFee(retDateTime, endDate, booking);
+                totalReturnFee += penaltyFee;
+                booking.updatePenaltyFee(penaltyFee);
+                string PenaltyFee = "Penalty Fee for late return: " + penaltyFee;
+                display(PenaltyFee);
+            }
+            string damages = promptCheckForDamages();
+            updateDamages(damages);
+            if (totalReturnFee > 0)
+            {
+                booking.updateTotalFees(totalReturnFee);
+            }
+            else
+            {
+                string NoFees = "No outstanding fees.";
+                display(NoFees);
+            }
+            string status = "Completed";
+            booking.updateBookingStatus(status);
+            string message = "Return " + status;
+            display(message);
+            return;
+        }
+        else
+        {
+            string message = "Wrong return method. Returning to main menu.";
+            display(message);
+            return;
+        }
     }
     else
     {
-        string NoFees = "No outstanding fees.";
-        display(NoFees);
+        string message = "No ongoing bookings.";
+        display(message);
+        return;
     }
-    string status = "Completed";
-    booking.updateBookingStatus(status);
-    string message = "Return " + status;
-    display(message);
+    
 }
+    
 
 // get ongoing bookings
 Booking getOngoingBooking(Renter user)
@@ -1355,7 +1383,7 @@ Booking getOngoingBooking(Renter user)
     Booking ongoingBooking = null;
     foreach (Booking booking in user.Bookings)
     {
-        if (booking.Status == "Pending" || booking.Status == "Confirmed")
+        if (booking.Status == "Pending" || booking.Status == "Confirmed" || booking.Status == "Picked Up")
         {
             ongoingBooking = booking;
         }
