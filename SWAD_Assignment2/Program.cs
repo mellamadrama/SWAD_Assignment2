@@ -1267,49 +1267,57 @@ if (user != null)
         // make payment 
         void MakePayment()
         {
-            Booking booking = getOngoingBooking(renter);
-
-            displayBooking(booking);
-            string name = user.FullName;
-
-            Console.WriteLine("Confirm payment amount? (yes/no) ");
-            string res = Console.ReadLine();
-
-            if (res != "yes")
+            Booking booking = getUnpaidBooking(renter);
+            if (booking != null)
             {
-                Console.WriteLine("Payment Cancelled.");
-                return;
-            }
+                displayBooking(booking);
+                string name = user.FullName;
 
-            (PaymentMethod selectedPaymentMethod, double accBalance) = validatePaymentMethod();
+                Console.WriteLine("Confirm payment amount? (yes/no) ");
+                string res = Console.ReadLine();
 
-
-            if (booking.Status == "Pending")
-            {
-                while (accBalance < booking.Payment.TotalFee + booking.Payment.AdditionalCharge.DeliveryFee)
+                if (res != "yes")
                 {
-                    Console.WriteLine("Balance insufficient! Please choose another payment method!");
-                    (selectedPaymentMethod, accBalance) = validatePaymentMethod();
+                    Console.WriteLine("Payment Cancelled.");
+                    return;
                 }
 
-                selectedPaymentMethod.DeductBalance(booking.Payment.TotalFee);
+                (PaymentMethod selectedPaymentMethod, double accBalance) = validatePaymentMethod();
 
-                string status = "Confirmed";
-                booking.updateBookingStatus(status);
-            }
-            else if (booking.Status == "Confirmed")
-            {
-                while (accBalance < booking.Payment.AdditionalCharge.PenaltyFee + booking.Payment.AdditionalCharge.DamageFee)
+
+                if (booking.Status == "Pending")
                 {
-                    Console.WriteLine("Balance insufficient! Please choose another payment method!");
-                    (selectedPaymentMethod, accBalance) = validatePaymentMethod();
+                    while (accBalance < booking.Payment.TotalFee + booking.Payment.AdditionalCharge.DeliveryFee)
+                    {
+                        Console.WriteLine("Balance insufficient! Please choose another payment method!");
+                        (selectedPaymentMethod, accBalance) = validatePaymentMethod();
+                    }
+
+                    selectedPaymentMethod.DeductBalance(booking.Payment.TotalFee);
+
+                    string status = "Confirmed";
+                    booking.updateBookingStatus(status);
                 }
-                double additionalCharge = booking.Payment.AdditionalCharge.PenaltyFee + booking.Payment.AdditionalCharge.DamageFee;
+                else if (booking.Status == "Picked Up" || booking.Status == "Completed")
+                {
+                    while (accBalance < booking.Payment.AdditionalCharge.PenaltyFee + booking.Payment.AdditionalCharge.DamageFee)
+                    {
+                        Console.WriteLine("Balance insufficient! Please choose another payment method!");
+                        (selectedPaymentMethod, accBalance) = validatePaymentMethod();
+                    }
+                    double additionalCharge = booking.Payment.AdditionalCharge.PenaltyFee + booking.Payment.AdditionalCharge.DamageFee;
 
-                selectedPaymentMethod.DeductBalance(additionalCharge);
+                    selectedPaymentMethod.DeductBalance(additionalCharge);
+                }
+
+                sendReceipt((Renter)user);
             }
-
-            sendReceipt((Renter)user);
+            else
+            {
+                string message = "No ongoing bookings that require payment";
+                display(message);
+            }
+            
         }
 
         //return car
@@ -1472,7 +1480,7 @@ Booking getOngoingBooking(Renter user)
     Booking ongoingBooking = null;
     foreach (Booking booking in user.Bookings)
     {
-        if (booking.Status == "Pending" || booking.Status == "Confirmed" || booking.Status == "Picked Up")
+        if (booking.Status == "Picked Up")
         {
             ongoingBooking = booking;
         }
@@ -1480,6 +1488,36 @@ Booking getOngoingBooking(Renter user)
         else continue;
     }
     return ongoingBooking;
+}
+
+Booking getPaidBooking(Renter user)
+{
+    Booking ongoingBooking = null;
+    foreach (Booking booking in user.Bookings)
+    {
+        if (booking.Status == "Confirmed")
+        {
+            ongoingBooking = booking;
+        }
+
+        else continue;
+    }
+    return ongoingBooking;
+}
+
+Booking getUnpaidBooking(Renter user)
+{
+    Booking unpaidBooking = null;
+    foreach (Booking booking in user.Bookings)
+    {
+        if (booking.Status == "Pending" || booking.Status == "Picked Up" || booking.Status == "Completed")
+        {
+            unpaidBooking = booking;
+        }
+
+        else continue;
+    }
+    return unpaidBooking;
 }
 
 //calculate penalty fee
@@ -1508,7 +1546,7 @@ string promptCheckForDamages()
 
 void PickUpCar(Renter user)
 {
-    Booking booking = getOngoingBooking(user);
+    Booking booking = getPaidBooking(user);
 
     booking.Status = "Picked Up";
     Console.WriteLine("Pickup confirmed.");
@@ -1718,7 +1756,8 @@ void displayBooking(Booking currentBooking)
     }
     else
     {
-        Console.WriteLine("Fees owed: " + currentBooking.Payment.AdditionalCharge);
+        double additionalcharge = currentBooking.Payment.AdditionalCharge.PenaltyFee + currentBooking.Payment.AdditionalCharge.DamageFee;
+        Console.WriteLine("Fees owed: " + additionalcharge);
     }
 };
 
