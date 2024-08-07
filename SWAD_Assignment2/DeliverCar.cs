@@ -30,9 +30,9 @@ namespace SWAD_Assignment2
             set { pickupDeliveryFee = value; }
         }
 
-        public DeliverCar() { }
+        public DeliverCar() : base() { }
 
-        public DeliverCar(DateTime dateTimeDeliver, string deliveryLocation, double pickupDeliveryFee)
+        public DeliverCar(DateTime dateTimeDeliver, string deliveryLocation, double pickupDeliveryFee, AdditionalCharge additionalCharge) : base(additionalCharge)
         {
             this.dateTimeDeliver = dateTimeDeliver;
             this.deliveryLocation = deliveryLocation;

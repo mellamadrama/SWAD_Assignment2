@@ -26,7 +26,8 @@ namespace SWAD_Assignment2
         public override void DeductBalance(double amount)
         {
             Balance -= amount;
-            Console.WriteLine("Payment successful! New balance: SGD" +  Balance);
+            Console.WriteLine("Payment Successful!");
+            Console.WriteLine($"New Account Balance: {(Balance):C}");
         }
     }
 }

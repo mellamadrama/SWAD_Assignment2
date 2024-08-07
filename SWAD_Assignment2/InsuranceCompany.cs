@@ -13,6 +13,7 @@ namespace SWAD_Assignment2
         private string telephone;
         private string address;
         private string emailAddress;
+        private List<Insurance> insurances;
 
         public int BranchNo 
         { 
@@ -39,14 +40,20 @@ namespace SWAD_Assignment2
             get { return emailAddress; }
             set { emailAddress = value; }
         }
+        public List<Insurance> insurance
+        {
+            get { return insurances; }
+            set { insurances = value; }
+        }
         public Insurance_Company() { }
-        public Insurance_Company(int branchNo, string companyName ,string telephone, string address, string emailAddress)
+        public Insurance_Company(int branchNo, string companyName ,string telephone, string address, string emailAddress, List<Insurance> insuranceList)
         {
             this.branchNo = branchNo;
             this.companyName = companyName;
             this.telephone = telephone;
             this.address = address;
             this.emailAddress = emailAddress;
+            this.insurances = insuranceList;
         }
     }
 }

@@ -6,33 +6,33 @@ using System.Threading.Tasks;
 
 namespace SWAD_Assignment2
 {
-    internal class Insurance : Insurance_Company
+    internal class Insurance
     {
-        private string carPlateNo;
-        private int carOwnerId;
         private DateTime expiryDate;
-        public string CarPlateNo
-        {
-            get { return carPlateNo; }
-            set { carPlateNo = value; }
-        }
-        public int CarOwnerId
-        {
-            get { return carOwnerId; }
-            set { carOwnerId = value; }
-        }
+        private Car car;
+        private Insurance_Company company;
+
         public DateTime ExpiryDate
         {
             get { return expiryDate; }
             set { expiryDate = value; }
         }
-        public Insurance() { }
-        public Insurance(int branchNo, string companyName, string telephone, string address, string emailAddress, string carPlateNo, int carOwnerId, DateTime expiryDate)
-            :base(branchNo, companyName, telephone, address, emailAddress)
+        public Car Car
         {
-            this.carPlateNo = carPlateNo;
-            this.carOwnerId = carOwnerId;
-            this.expiryDate = expiryDate;
+            get { return car; }
+            set { car = value; }
+        }
+        public Insurance_Company Company
+        {
+            get { return company; }
+            set { company = value; }
+        }
+        public Insurance() { }
+        public Insurance(DateTime expiryDate, Car car, Insurance_Company company)
+        {
+            this.expiryDate = expiryDate; 
+            this.car = car;
+            this.company = company;
         }
     }
 }

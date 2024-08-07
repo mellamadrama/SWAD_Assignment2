@@ -10,7 +10,6 @@ namespace SWAD_Assignment2
     {
         private DateTime dateTimePickup;
         private string pickupLocation;
-
         public DateTime DateTimePickup
         {
             get { return dateTimePickup; }
@@ -23,9 +22,9 @@ namespace SWAD_Assignment2
             set { pickupLocation = value; }
         }
 
-        public Pickup() { }
+        public Pickup() : base() { }
 
-        public Pickup(DateTime dateTimePickup, string pickupLocation)
+        public Pickup(DateTime dateTimePickup, string pickupLocation, AdditionalCharge additionalCharge) : base(additionalCharge)
         {
             this.dateTimePickup = dateTimePickup;
             this.pickupLocation = pickupLocation;

@@ -59,13 +59,23 @@ static List<Insurance> LoadInsuranceFromCSV(string insuranceCsvFilePath, Diction
 
         if (companyDictionary.TryGetValue(branchNo, out var companyName))
         {
-            var insurance = new Insurance
+            var car = new Car
+            {
+                CarOwnerId = carOwnerId,
+                LicensePlate = carPlateNo
+            };
+
+            var company = new Insurance_Company
             {
                 BranchNo = branchNo,
                 CompanyName = companyName,
-                CarPlateNo = carPlateNo,
-                CarOwnerId = carOwnerId,
-                ExpiryDate = expiryDate
+            };
+
+            var insurance = new Insurance
+            {
+                ExpiryDate = expiryDate,
+                Car = car,
+                Company = company
             };
 
             insuranceList.Add(insurance);
@@ -114,7 +124,7 @@ static List<Car> LoadCarsFromCSV(string carCsvFilePath, List<string> dates, List
         Insurance insurance = null;
         if (status == "Y")
         {
-            insurance = insuranceList.FirstOrDefault(i => i.CarPlateNo == licensePlate && i.CarOwnerId == ownerId);
+            insurance = insuranceList.FirstOrDefault(i => i.Car.LicensePlate == licensePlate && i.Car.CarOwnerId == ownerId);
         }
 
         List<Booking> bookings = new List<Booking>(); // empty list of bookings 
@@ -573,7 +583,7 @@ if (user != null)
             }
 
             // Check if car plate number exists in the insuranceList
-            string insuranceStatus = insuranceList.Any(i => i.CarPlateNo == carPlateNo) ? "Y" : "X";
+            string insuranceStatus = insuranceList.Any(i => i.Car.LicensePlate == carPlateNo) ? "Y" : "X";
 
             Console.WriteLine();
             Console.WriteLine("========Car details summary========");
@@ -587,13 +597,13 @@ if (user != null)
             if (insuranceStatus == "Y")
             {
                 Console.WriteLine($"Insurance Status: {insuranceStatus}");
-                var insurance = insuranceList.FirstOrDefault(i => i.CarPlateNo == carPlateNo);
+                var insurance = insuranceList.FirstOrDefault(i => i.Car.LicensePlate == carPlateNo);
                 if (insurance != null)
                 {
                     Console.WriteLine();
                     Console.WriteLine("====Insurance Company Details====");
-                    Console.WriteLine($"Insurance Company: {insurance.CompanyName}");
-                    Console.WriteLine($"Branch Number: {insurance.BranchNo}");
+                    Console.WriteLine($"Insurance Company: {insurance.Company.CompanyName}");
+                    Console.WriteLine($"Branch Number: {insurance.Company.BranchNo}");
                     Console.WriteLine($"Expiry Date: {insurance.ExpiryDate.ToShortDateString()}");
                 }
                 else
@@ -715,15 +725,14 @@ if (user != null)
             if (!DateTime.TryParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null, DateTimeStyles.None, out startDate) ||
                 !DateTime.TryParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null, DateTimeStyles.None, out endDate))
             {
-                return false; // Invalid date format
+                return false;
             }
 
             if (startDate >= endDate)
             {
-                return false; // Start date must be before end date
+                return false;
             }
 
-            // Check if the booking range intersects with any unavailable dates
             foreach (var date in selectedCar.UnavailableDates)
             {
                 DateTime unavailableDate;
@@ -731,12 +740,34 @@ if (user != null)
                 {
                     if (unavailableDate >= startDate && unavailableDate < endDate)
                     {
-                        return false; // Booking range intersects with an unavailable date
+                        return false;
                     }
                 }
             }
 
-            return true; // Booking range is available
+            return true;
+        }
+
+        bool HasConsecutiveDates(List<string> availableDates)
+        {
+            if (availableDates.Count < 2)
+            {
+                return false;
+            }
+            availableDates.Sort();
+
+            DateTime prevDate = DateTime.Parse(availableDates[0]);
+            for (int i = 1; i < availableDates.Count; i++)
+            {
+                DateTime currentDate = DateTime.Parse(availableDates[i]);
+                if ((currentDate - prevDate).TotalDays >= 1)
+                {
+                    return true;
+                }
+                prevDate = currentDate;
+            }
+
+            return false;
         }
 
         void BrowseCars()
@@ -745,7 +776,7 @@ if (user != null)
             Console.WriteLine("List of Cars to Rent:");
             foreach (var car in cars)
             {
-                Console.WriteLine($"{"License Plate:",-14} {car.LicensePlate,-9} {"Make:",-5} {car.CarMake,-15} {"Model:",-6} {car.Model,-9} {"Year:",-5} {car.Year,-6} {"Mileage:",-8} {car.Mileage,-14} {"Availability:",-13} {car.Availability}");
+                Console.WriteLine($"{"License Plate:",-14} {car.LicensePlate,-9} {"Make:",-5} {car.CarMake,-15} {"Model:",-6} {car.Model,-9} {"Year:",-5} {car.Year,-6} {"Mileage:",-8} {car.Mileage,-14} {"Availability:",-13} {car.Availability} {"Charge per hour:",-16} ${car.Charge}");
             }
 
             Car selectedCar = null;
@@ -761,6 +792,16 @@ if (user != null)
                 if (selectedCar == null)
                 {
                     Console.WriteLine("Invalid license plate. Please try again.");
+                }
+                else
+                {
+                    var availableDates = selectedCar.AvailableDates.Except(selectedCar.UnavailableDates).ToList();
+
+                    if (!HasConsecutiveDates(availableDates))
+                    {
+                        Console.WriteLine("No valid booking dates available. Please select another car.");
+                        selectedCar = null;
+                    }
                 }
             }
             BookCar(selectedCar);
@@ -794,26 +835,18 @@ if (user != null)
 
                 Console.WriteLine();
                 Console.WriteLine("Car Details:");
-                Console.WriteLine($"{"License Plate:",-14} {selectedCar.LicensePlate,-9} {"Make:",-5} {selectedCar.CarMake,-15} {"Model:",-6} {selectedCar.Model,-9} {"Year:",-5} {selectedCar.Year,-6} {"Mileage:",-8} {selectedCar.Mileage,-14} {"Availability:",-13} {selectedCar.Availability}");
+                Console.WriteLine($"{"License Plate:",-14} {selectedCar.LicensePlate,-9} {"Make:",-5} {selectedCar.CarMake,-15} {"Model:",-6} {selectedCar.Model,-9} {"Year:",-5} {selectedCar.Year,-6} {"Mileage:",-8} {selectedCar.Mileage,-14} {"Availability:",-13} {selectedCar.Availability} {"Charge per hour:",-16} ${selectedCar.Charge}");
 
                 var availableDates = selectedCar.AvailableDates.Except(selectedCar.UnavailableDates).ToList();
                 var originalAvailableDates = new List<string>(availableDates);
                 var originalUnavailableDates = new List<string>(selectedCar.UnavailableDates);
-                int count = 0;
+               
 
                 Console.WriteLine();
                 Console.WriteLine("Available Dates:");
                 foreach (var date in availableDates)
                 {
                     Console.WriteLine(date);
-                    count += 1;
-                }
-
-                if (count < 3)
-                {
-                    Console.WriteLine("No valid booking dates available. Redirecting to browse cars.");
-                    BrowseCars();
-                    return;
                 }
 
                 bool filteringCompleted = false;
@@ -826,20 +859,25 @@ if (user != null)
 
                     if (filterChoice == "Y")
                     {
-                        Console.WriteLine("Enter the month (1-12) you want to filter:");
-                        if (int.TryParse(Console.ReadLine(), out int month) && month >= 1 && month <= 12)
+                        while (true)
                         {
-                            var filteredDates = availableDates.Where(date => DateTime.TryParse(date, out DateTime dt) && dt.Month == month).ToList();
-
-                            Console.WriteLine($"Available dates for month {month}:");
-                            foreach (var date in filteredDates)
+                            Console.WriteLine("Enter the month number 1-12 (January-December) you want to filter:");
+                            if (int.TryParse(Console.ReadLine(), out int month) && month >= 1 && month <= 12)
                             {
-                                Console.WriteLine(date);
+                                var filteredDates = availableDates.Where(date => DateTime.TryParse(date, out DateTime dt) && dt.Month == month).ToList();
+
+                                Console.WriteLine($"Available dates for month {month}:");
+                                foreach (var date in filteredDates)
+                                {
+                                    Console.WriteLine(date);
+                                }
+                                break;
                             }
-                        }
-                        else
-                        {
-                            Console.WriteLine("Invalid month. Please enter a number between 1 and 12.");
+                            else
+                            {
+                                Console.WriteLine("Invalid month. Please enter a number between 1 and 12.");
+                                Console.WriteLine();
+                            }
                         }
                     }
                     else if (filterChoice == "N")
@@ -869,6 +907,7 @@ if (user != null)
                         else
                         {
                             Console.WriteLine("Invalid start date and time or it is unavailable, or it is the last available date. Please try again.");
+                            Console.WriteLine();
                         }
                     }
 
@@ -889,11 +928,13 @@ if (user != null)
                             else
                             {
                                 Console.WriteLine("End date and time must be after the start date and time. Please try again.");
+                                Console.WriteLine();
                             }
                         }
                         else
                         {
                             Console.WriteLine("Invalid end date and time or it is unavailable, or it is the first available date. Please try again.");
+                            Console.WriteLine();
                         }
                     }
 
@@ -943,6 +984,7 @@ if (user != null)
 
                         var locations = ReadLocationsFromCsv("iCar_Locations.csv");
 
+                        Console.WriteLine();
                         Console.WriteLine("List of Pickup Locations:");
                         for (int i = 0; i < locations.Count; i++)
                         {
@@ -951,6 +993,7 @@ if (user != null)
 
                         while (true)
                         {
+                            Console.WriteLine();
                             Console.WriteLine("Enter the number of the location where you want to pick up the car: ");
                             if (int.TryParse(Console.ReadLine(), out int locationIndex) && locationIndex >= 1 && locationIndex <= locations.Count)
                             {
@@ -961,6 +1004,7 @@ if (user != null)
                             else
                             {
                                 Console.WriteLine("Invalid location number. Please try again.");
+                                Console.WriteLine();
                             }
                         }
 
@@ -974,6 +1018,7 @@ if (user != null)
 
                         while (true)
                         {
+                            Console.WriteLine();
                             Console.WriteLine("Enter the delivery location in this format: Postal Code, Address, Country: ");
                             string deliveryLocation = Console.ReadLine();
 
@@ -992,17 +1037,20 @@ if (user != null)
                                 else
                                 {
                                     Console.WriteLine("Invalid postal code. It must be exactly 6 digits long and contain only numbers. Please try again.");
+                                    Console.WriteLine();
                                 }
                             }
                             else
                             {
                                 Console.WriteLine("Invalid location. Ensure the country is 'Singapore' and the format is correct. Please try again.");
+                                Console.WriteLine();
                             }
                         }
                     }
                     else
                     {
                         Console.WriteLine("Invalid choice. Please enter 'P' for pickup or 'D' for delivery.");
+                        Console.WriteLine();
                     }
                 }
                 Console.WriteLine();
@@ -1033,6 +1081,7 @@ if (user != null)
 
                         while (true)
                         {
+                            Console.WriteLine();
                             Console.WriteLine("Enter the number of the location where you want to return the car: ");
                             if (int.TryParse(Console.ReadLine(), out int locationIndex) && locationIndex >= 1 && locationIndex <= locations.Count)
                             {
@@ -1043,6 +1092,7 @@ if (user != null)
                             else
                             {
                                 Console.WriteLine("Invalid location number. Please try again.");
+                                Console.WriteLine();
                             }
                         }
                     }
@@ -1056,6 +1106,7 @@ if (user != null)
 
                         while (true)
                         {
+                            Console.WriteLine();
                             Console.WriteLine("Enter the return delivery location in this format: Postal Code, Address, Country: ");
                             string returnLocation = Console.ReadLine();
 
@@ -1074,17 +1125,20 @@ if (user != null)
                                 else
                                 {
                                     Console.WriteLine("Invalid postal code. It must be exactly 6 digits long and contain only numbers. Please try again.");
+                                    Console.WriteLine();
                                 }
                             }
                             else
                             {
                                 Console.WriteLine("Invalid location. Ensure the country is 'Singapore' and the format is correct. Please try again.");
+                                Console.WriteLine();
                             }
                         }
                     }
                     else
                     {
                         Console.WriteLine("Invalid choice. Please enter 'S' for self-return or 'D' for delivery return.");
+                        Console.WriteLine();
                     }
                 }
                 DateTime startTime = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null);
@@ -1159,8 +1213,11 @@ if (user != null)
                             Payment = new Payment(DateTime.Now, totalCharge, additionalCharge),
                             Car = selectedCar
                         };
+
                         renter.Bookings.Add(booking);
                         redoBooking = false;
+                        Console.WriteLine();
+                        Console.WriteLine("Continue to Payment");
                         MakePayment();
                         break;
                     }
@@ -1176,7 +1233,7 @@ if (user != null)
                     else if (choice == "E")
                     {
                         Console.WriteLine();
-                        Console.WriteLine("Booking Canceled. Exiting.");
+                        Console.WriteLine("Booking Cancelled. Exiting.");
                         selectedCar.AvailableDates = new List<string>(originalAvailableDates);
                         selectedCar.UnavailableDates = new List<string>(originalUnavailableDates);
                         redoBooking = false;
@@ -1294,6 +1351,8 @@ if (user != null)
                     if (totalReturnFee > 0)
                     {
                         booking.updateTotalFees(totalReturnFee);
+                        Console.WriteLine();
+                        Console.WriteLine("Continue to Payment");
                         MakePayment();
                     }
                     else
