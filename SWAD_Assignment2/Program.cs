@@ -1356,7 +1356,7 @@ void returnToiCarStation()
             }
             string status = "Completed";
             booking.updateBookingStatus(status);
-            string message = "Return " + status;
+            string message = "Rental " + status;
             display(message);
             return;
         }
