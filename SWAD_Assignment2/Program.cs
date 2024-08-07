@@ -906,7 +906,7 @@ if (user != null)
                         Console.WriteLine("Please enter the start date and time slot for your booking (yyyy-MM-dd hh:mm tt): ");
                         startDateTime = Console.ReadLine();
 
-                        if (!selectedCar.UnavailableDates.Contains(startDateTime) && availableDates.IndexOf(startDateTime) != availableDates.Count - 1)
+                        if (!selectedCar.UnavailableDates.Contains(startDateTime) && availableDates.IndexOf(startDateTime) != availableDates.Count - 1 && availableDates.Contains(startDateTime))
                         {
                             break;
                         }
@@ -922,7 +922,7 @@ if (user != null)
                         Console.WriteLine("Please enter the end date and time slot for your booking (yyyy-MM-dd hh:mm tt): ");
                         endDateTime = Console.ReadLine();
 
-                        if (!selectedCar.UnavailableDates.Contains(endDateTime) && availableDates.IndexOf(endDateTime) != 0)
+                        if (!selectedCar.UnavailableDates.Contains(endDateTime) && availableDates.IndexOf(endDateTime) != 0 && availableDates.Contains(endDateTime))
                         {
                             DateTime startDate = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null);
                             DateTime endDate = DateTime.ParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null);
@@ -1534,8 +1534,8 @@ double calculatePenaltyFee(DateTime retDateTime, DateTime endDate, Booking ongoi
 string promptCheckForDamages()
 {
     Console.WriteLine("Please check for damages. If there are damages, enter 'Has Damages'. Else enter 'No Damages'.");
-    string damages = Console.ReadLine();
-    while (damages != "Has Damages" && damages != "No Damages")
+    string damages = Console.ReadLine().ToLower();
+    while (damages != "has damages" && damages != "no damages")
     {
         Console.WriteLine("Invalid input. Try again.");
         Console.WriteLine("Please check for damages. If there are damages, enter 'Has Damages'. Else enter 'No Damages'.");
