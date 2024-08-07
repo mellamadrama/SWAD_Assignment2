@@ -363,6 +363,12 @@ if (user != null)
                     RegisterCar(cars, insuranceList, carMakes, carOwner);
                     break;
                 case "3":
+                    Console.WriteLine("Logging out...");
+                    Console.WriteLine();
+                    user = login();
+                    displayUserDetails(user);
+                    break;
+                case "4":
                     Console.WriteLine("Goodbye!");
                     return;
                 default:
@@ -701,13 +707,13 @@ if (user != null)
                     PickUpCar(renter);
                     break;
                 case "6":
+                    MakePayment();
+                    break;
+                case "7":
                     Console.WriteLine("Logging out...");
                     Console.WriteLine();
                     user = login();
                     displayUserDetails(user);
-                    break;
-                case "7":
-                    MakePayment();
                     break;
                 case "0":
                     Console.WriteLine("Goodbye!");
@@ -1415,10 +1421,10 @@ void displayRenterMainMenu()
     Console.WriteLine("3. View Payment History");
     Console.WriteLine("4. Return Car");
     Console.WriteLine("5. Pick up car");
-    Console.WriteLine("6. Logout");
-    Console.WriteLine("7. Make Payment");
+    Console.WriteLine("6. Make Payment");
+    Console.WriteLine("7. Logout");
     Console.WriteLine("0. Exit");
-    Console.WriteLine("Choose an option:");
+    Console.Write("Choose an option:");
 }
 
 void displayCarOwnerMainMenu()
@@ -1427,7 +1433,8 @@ void displayCarOwnerMainMenu()
     Console.WriteLine("========Menu========");
     Console.WriteLine("1. View Cars Owned");
     Console.WriteLine("2. Register Car");
-    Console.WriteLine("3. Exit");
+    Console.WriteLine("3. Logout");
+    Console.WriteLine("4. Exit");
     Console.Write("Choose an Option: ");
 }
 
@@ -1546,11 +1553,11 @@ void PickUpCar(Renter user)
         if (method == "1")
         {
             Console.WriteLine();
-            Console.Write("Enter wallet type:");
-            string walletType = Console.ReadLine();
+            Console.Write("Enter wallet type: ");
+            string walletType = Console.ReadLine().ToUpper();
             selectedPaymentMethod = paymentMethods
                 .OfType<DigitalWallet>()
-                .FirstOrDefault(dw => dw.Type == walletType);
+                .FirstOrDefault(dw => dw.Type.ToUpper() == walletType);
 
             if (selectedPaymentMethod == null)
             {
