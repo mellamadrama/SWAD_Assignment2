@@ -1248,6 +1248,98 @@ if (user != null)
 
             sendReceipt((Renter)user);
         }
+
+        //return car
+        void returnCar(Renter user)
+        {
+            Console.WriteLine("Select: \n[1] Return to iCar Station \n[2] Return from Desired Location");
+            string option = Console.ReadLine();
+            if (option == "1")
+            {
+                returnToiCarStation();
+            }
+            else if (option == "2")
+            {
+                returnFromDesiredLocation();
+            }
+            else
+            {
+                Console.WriteLine("Not a valid option. Returning to Main Screen.");
+            }
+        }
+
+        // return to iCar Station
+        void returnToiCarStation()
+        {
+            double totalReturnFee = 0;
+            Booking booking = getOngoingBooking((Renter)user);
+            if (booking != null)
+            {
+                if (booking.ReturnMethod is SelfReturn selfReturn)
+                {
+                    DateTime retDateTime = DateTime.Now;
+                    selfReturn.DateTimeReturn = retDateTime;
+                    DateTime endDate = booking.EndDate;
+                    if (retDateTime > endDate)
+                    {
+                        double penaltyFee = calculatePenaltyFee(retDateTime, endDate, booking);
+                        totalReturnFee += penaltyFee;
+                        booking.updatePenaltyFee(penaltyFee);
+                        string PenaltyFee = "Penalty Fee for late return: " + penaltyFee;
+                        display(PenaltyFee);
+                    }
+                    string damages = promptCheckForDamages();
+                    double damageFee = updateDamages(damages);
+                    totalReturnFee += damageFee;
+                    if (totalReturnFee > 0)
+                    {
+                        booking.updateTotalFees(totalReturnFee);
+                        MakePayment();
+                    }
+                    else
+                    {
+                        string NoFees = "No outstanding fees.";
+                        display(NoFees);
+                    }
+                    string status = "Completed";
+                    booking.updateBookingStatus(status);
+                    string message = "Rental " + status;
+                    display(message);
+                    return;
+                }
+                else
+                {
+                    string message = "Wrong return method. Returning to main menu.";
+                    display(message);
+                    return;
+                }
+            }
+            else
+            {
+                string message = "No ongoing bookings.";
+                display(message);
+                return;
+            }
+
+        }
+
+        double updateDamages(string damages)
+        {
+            if (damages == "Has Damages")
+            {
+                double fee = reportAccident();
+                return fee;
+            }
+            else return 0;
+        }
+
+        double reportAccident()
+        {
+            Booking booking = getOngoingBooking(renter);
+            booking.Payment.AdditionalCharge.DamageFee += 100;
+            booking.Payment.TotalFee += 100;
+            return 100;
+        }
     }
 }
 else
@@ -1306,78 +1398,6 @@ void display(string message)
 {
     Console.WriteLine(message);
 }
-
-//return car
-void returnCar(Renter user)
-{
-    Console.WriteLine("Select: \n[1] Return to iCar Station \n[2] Return from Desired Location");
-    string option = Console.ReadLine();
-    if (option == "1")
-    {
-        returnToiCarStation();
-    }
-    else if (option == "2")
-    {
-        returnFromDesiredLocation();
-    }
-    else
-    {
-        Console.WriteLine("Not a valid option. Returning to Main Screen.");
-    }
-}
-
-// return to iCar Station
-void returnToiCarStation()
-{
-    double totalReturnFee = 0;
-    Booking booking = getOngoingBooking((Renter)user);
-    if (booking != null)
-    {
-        if (booking.ReturnMethod is SelfReturn selfReturn)
-        {
-            DateTime retDateTime = DateTime.Now;
-            selfReturn.DateTimeReturn = retDateTime;
-            DateTime endDate = booking.EndDate;
-            if (retDateTime > endDate)
-            {
-                double penaltyFee = calculatePenaltyFee(retDateTime, endDate, booking);
-                totalReturnFee += penaltyFee;
-                booking.updatePenaltyFee(penaltyFee);
-                string PenaltyFee = "Penalty Fee for late return: " + penaltyFee;
-                display(PenaltyFee);
-            }
-            string damages = promptCheckForDamages();
-            updateDamages(damages);
-            if (totalReturnFee > 0)
-            {
-                booking.updateTotalFees(totalReturnFee);
-            }
-            else
-            {
-                string NoFees = "No outstanding fees.";
-                display(NoFees);
-            }
-            string status = "Completed";
-            booking.updateBookingStatus(status);
-            string message = "Rental " + status;
-            display(message);
-            return;
-        }
-        else
-        {
-            string message = "Wrong return method. Returning to main menu.";
-            display(message);
-            return;
-        }
-    }
-    else
-    {
-        string message = "No ongoing bookings.";
-        display(message);
-        return;
-    }
-    
-}
     
 
 // get ongoing bookings
@@ -1419,16 +1439,6 @@ string promptCheckForDamages()
     }
     return damages;
 }
-
-void updateDamages(string damages)
-{
-    if (damages == "Has Damages")
-    {
-        reportAccident();
-    }
-}
-
-void reportAccident() { }
 
 void PickUpCar(Renter user)
 {
