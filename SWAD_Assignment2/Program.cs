@@ -908,7 +908,6 @@ if (user != null)
                         Console.WriteLine();
                         Console.WriteLine("Invalid booking range or it intersects with an unavailable date.");
                         Console.WriteLine();
-                        Console.WriteLine(selectedCar.AvailableDates.Count);
                     }
                 }
 
