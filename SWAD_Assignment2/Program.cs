@@ -1288,8 +1288,8 @@ if (user != null)
                         string PenaltyFee = "Penalty Fee for late return: " + penaltyFee;
                         display(PenaltyFee);
                     }
-                    string damages = promptCheckForDamages();
-                    double damageFee = updateDamages(damages);
+                    string damage = promptCheckForDamages();
+                    double damageFee = updateDamages(damage);
                     totalReturnFee += damageFee;
                     if (totalReturnFee > 0)
                     {
@@ -1323,9 +1323,9 @@ if (user != null)
 
         }
 
-        double updateDamages(string damages)
+        double updateDamages(string damage)
         {
-            if (damages == "Has Damages")
+            if (damage == "Has Damages")
             {
                 double fee = reportAccident();
                 return fee;
