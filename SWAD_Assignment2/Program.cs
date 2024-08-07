@@ -669,13 +669,13 @@ if (user != null)
             switch (choice)
             {
                 case "1":
-                    if (renter.Bookings.All(booking => booking.Status != "Confirmed"))
+                    if (renter.Bookings.All(booking => booking.Status != "Pending"))
                     {
                         BrowseCars();
                     }
                     else
                     {
-                        Console.WriteLine("Only one ongoing booking can be made at a time!");
+                        Console.WriteLine("Please proceed to pay for current pending booking!");
                     }
                     break;
                 case "2":
@@ -1266,7 +1266,7 @@ void displayRenterMainMenu()
     Console.WriteLine("4. Return Car");
     Console.WriteLine("5. Pick up car");
     Console.WriteLine("6. Logout");
-    Console.WriteLine("7. payment just to test i will remove this later");
+    Console.WriteLine("7. Make Payment");
     Console.WriteLine("0. Exit");
     Console.WriteLine("Choose an option:");
 }
