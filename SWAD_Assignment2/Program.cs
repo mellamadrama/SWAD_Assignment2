@@ -1,6 +1,7 @@
 // See https://aka.ms/new-console-template for more information
 
 using SWAD_Assignment2;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics.Metrics;
 using System.Formats.Asn1;
@@ -832,6 +833,55 @@ if (user != null)
             MakeBooking(selectedCar);
         }
 
+        PickUpMethod initialisePickUpMethod(string startDateTime, PickUpMethod pickUpMethod, int locationIndex)
+        {
+            Pickup selfpickup = new Pickup
+            {
+                DateTimePickup = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null)
+            };
+
+            selfpickup.PickupLocation = locations[locationIndex - 1];
+            pickUpMethod = selfpickup;
+            return pickUpMethod;
+        }
+
+        ReturnMethod initialiseReturnMethod(string endDateTime, ReturnMethod returnMethod, int locationIndex)
+        {
+            SelfReturn selfReturn = new SelfReturn
+            {
+                DateTimeReturn = DateTime.ParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null)
+            };
+
+            selfReturn.ICarReturnLocation = locations[locationIndex - 1];
+            returnMethod = selfReturn;
+            return selfReturn;
+        }
+
+        (DeliverCar, double) initialiseDeliveryPickUp(string startDateTime, DeliverCar pickUpMethod, string deliveryLocation, double deliveryFee)
+        {
+            DeliverCar delivery = new DeliverCar
+            {
+                DateTimeDeliver = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null)
+            };
+            delivery.DeliveryLocation = deliveryLocation;
+            pickUpMethod = delivery;
+            deliveryFee += 10;
+            return (pickUpMethod, deliveryFee);
+        }
+
+        (DeliveryReturn, double) initialiseDeliveryReturn(string endDateTime, DeliveryReturn returnMethod, string returnLocation, double deliveryFee)
+        {
+            DeliveryReturn deliveryReturn = new DeliveryReturn
+            {
+                DateTimeReturnDelivery = DateTime.ParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null),
+                AdditionalCharge = new AdditionalCharge()
+            };
+            deliveryReturn.ReturnLocation = returnLocation;
+            returnMethod = deliveryReturn;
+            deliveryFee += 10;
+            return (returnMethod, deliveryFee);
+        }
+
         void MakeBooking(Car selectedCar)
         {
             bool redoBooking = true;
@@ -975,11 +1025,6 @@ if (user != null)
 
                     if (pickupOrDelivery == "P")
                     {
-                        Pickup selfpickup = new Pickup
-                        {
-                            DateTimePickup = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null)
-                        };
-
                         var locations = ReadLocationsFromCsv("iCar_Locations.csv");
 
                         Console.WriteLine();
@@ -995,8 +1040,7 @@ if (user != null)
                             Console.WriteLine("Enter the number of the location where you want to pick up the car: ");
                             if (int.TryParse(Console.ReadLine(), out int locationIndex) && locationIndex >= 1 && locationIndex <= locations.Count)
                             {
-                                selfpickup.PickupLocation = locations[locationIndex - 1];
-                                pickUpMethod = selfpickup;
+                                pickUpMethod = initialisePickUpMethod(startDateTime, pickUpMethod, locationIndex);
                                 break;
                             }
                             else
@@ -1009,10 +1053,6 @@ if (user != null)
                     }
                     else if (pickupOrDelivery == "D")
                     {
-                        DeliverCar delivery = new DeliverCar
-                        {
-                            DateTimeDeliver = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null)
-                        };
 
                         while (true)
                         {
@@ -1027,9 +1067,7 @@ if (user != null)
 
                                 if (postalCode.Length == 6 && postalCode.All(char.IsDigit))
                                 {
-                                    delivery.DeliveryLocation = deliveryLocation;
-                                    pickUpMethod = delivery;
-                                    deliveryFee += 10;
+                                    (pickUpMethod, deliveryFee) = initialiseDeliveryPickUp(startDateTime, (DeliverCar)pickUpMethod, deliveryLocation, deliveryFee);
                                     break;
                                 }
                                 else
@@ -1063,10 +1101,6 @@ if (user != null)
 
                     if (returnMethodChoice == "S")
                     {
-                        SelfReturn selfReturn = new SelfReturn
-                        {
-                            DateTimeReturn = DateTime.ParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null)
-                        };
 
                         Console.WriteLine("Please select a return location:");
 
@@ -1083,8 +1117,7 @@ if (user != null)
                             Console.WriteLine("Enter the number of the location where you want to return the car: ");
                             if (int.TryParse(Console.ReadLine(), out int locationIndex) && locationIndex >= 1 && locationIndex <= locations.Count)
                             {
-                                selfReturn.ICarReturnLocation = locations[locationIndex - 1];
-                                returnMethod = selfReturn;
+                                returnMethod = initialiseReturnMethod(endDateTime, returnMethod, locationIndex);
                                 break;
                             }
                             else
@@ -1096,11 +1129,6 @@ if (user != null)
                     }
                     else if (returnMethodChoice == "D")
                     {
-                        DeliveryReturn deliveryReturn = new DeliveryReturn
-                        {
-                            DateTimeReturnDelivery = DateTime.ParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null),
-                            AdditionalCharge = new AdditionalCharge()
-                        };
 
                         while (true)
                         {
@@ -1115,9 +1143,7 @@ if (user != null)
 
                                 if (postalCode.Length == 6 && postalCode.All(char.IsDigit))
                                 {
-                                    deliveryReturn.ReturnLocation = returnLocation;
-                                    returnMethod = deliveryReturn;
-                                    deliveryFee += 10;
+                                    (returnMethod, deliveryFee) = initialiseDeliveryReturn(endDateTime, (DeliveryReturn)returnMethod, returnLocation, deliveryFee);
                                     break;
                                 }
                                 else
