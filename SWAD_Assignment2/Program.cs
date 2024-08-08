@@ -701,10 +701,10 @@ if (user != null)
                     ViewPaymentHistory(renter);
                     break;
                 case "4":
-                    returnCar(renter);
+                    returnCar();
                     break;
                 case "5":
-                    PickUpCar(renter);
+                    PickUpCar();
                     break;
                 case "6":
                     MakePayment();
@@ -810,34 +810,34 @@ if (user != null)
                     }
                 }
             }
-            BookCar(selectedCar);
+
+            string bookingInput = string.Empty;
+
+            while (true)
+            {
+                Console.WriteLine();
+                Console.WriteLine("Press Enter to start the booking: ");
+                bookingInput = Console.ReadLine();
+
+                if (string.IsNullOrEmpty(bookingInput))
+                {
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("Invalid input. Please press Enter to start the booking.");
+                }
+            }
+            MakeBooking(selectedCar);
         }
 
-        void BookCar(Car selectedCar)
+        void MakeBooking(Car selectedCar)
         {
             bool redoBooking = true;
             while (redoBooking)
             {
                 redoBooking = false;
-
-                string bookingInput = string.Empty;
-
-                while (true)
-                {
-                    Console.WriteLine();
-                    Console.WriteLine("Press Enter to start the booking: ");
-                    bookingInput = Console.ReadLine();
-
-                    if (string.IsNullOrEmpty(bookingInput))
-                    {
-                        break;
-                    }
-                    else
-                    {
-                        Console.WriteLine();
-                        Console.WriteLine("Invalid input. Please press Enter to start the booking.");
-                    }
-                }
 
                 Console.WriteLine();
                 Console.WriteLine("Car Details:");
@@ -1267,7 +1267,7 @@ if (user != null)
         // make payment 
         void MakePayment()
         {
-            Booking booking = getUnpaidBooking(renter);
+            Booking booking = getUnpaidBooking();
             if (booking != null)
             {
                 displayBooking(booking);
@@ -1316,13 +1316,13 @@ if (user != null)
             else
             {
                 string message = "No ongoing bookings that require payment";
-                display(message);
+                //display(message);
             }
             
         }
 
         //return car
-        void returnCar(Renter user)
+        void returnCar()
         {
             Console.WriteLine("Select: \n[1] Return to iCar Station \n[2] Return from Desired Location");
             string option = Console.ReadLine();
@@ -1344,21 +1344,21 @@ if (user != null)
         void returnToiCarStation()
         {
             double totalReturnFee = 0;
-            Booking booking = getOngoingBooking(renter);
+            Booking booking = getOngoingBooking();
             if (booking != null)
             {
-                if (booking.ReturnMethod is SelfReturn selfReturn)
+                ReturnMethod returnMethod = booking.getReturnMethod();
+                if (returnMethod is SelfReturn selfReturn)
                 {
-                    DateTime retDateTime = DateTime.Now;
-                    selfReturn.DateTimeReturn = retDateTime;
-                    DateTime endDate = booking.EndDate;
+                    DateTime retDateTime = getCurrentDateTime();
+                    booking.setDateTimeReturn(retDateTime);
+                    DateTime endDate = booking.getEndDate();
                     if (retDateTime > endDate)
                     {
                         double penaltyFee = calculatePenaltyFee(retDateTime, endDate, booking);
                         totalReturnFee += penaltyFee;
                         booking.updatePenaltyFee(penaltyFee);
-                        string PenaltyFee = "Penalty Fee for late return: " + penaltyFee;
-                        display(PenaltyFee);
+                        displayPenaltyFee(penaltyFee);
                     }
                     string damage = promptCheckForDamages();
                     double damageFee = updateDamages(damage);
@@ -1368,54 +1368,144 @@ if (user != null)
                         booking.updateTotalFees(totalReturnFee);
                         Console.WriteLine();
                         Console.WriteLine("Continue to Payment");
+                        Console.WriteLine();
                         MakePayment();
                     }
                     else
                     {
-                        string NoFees = "No outstanding fees.";
-                        display(NoFees);
+                        displayNoOutstandingFees();
                     }
-                    if (booking.Status != "All Expenses Paid For")
-                    {
-                        string status = "Completed";
-                        booking.updateBookingStatus(status);
-                    }
-                    string message = "Rental Completed";
-                    display(message);
+                    string status = "Completed";
+                    booking.updateBookingStatus(status);
+                    string message = "Rental " + status;
+                    //display(message);
                     return;
                 }
                 else
                 {
                     string message = "Wrong return method. Returning to main menu.";
-                    display(message);
+                    //display(message);
                     return;
                 }
             }
             else
             {
                 string message = "No ongoing bookings.";
-                display(message);
+                //display(message);
                 return;
             }
 
         }
 
+        Booking getOngoingBooking()
+        {
+            Booking ongoingBooking = null;
+            foreach (Booking booking in renter.Bookings)
+            {
+                if (booking.Status == "Picked Up")
+                {
+                    ongoingBooking = booking;
+                }
+
+                else continue;
+            }
+            return ongoingBooking;
+        }
+
+        DateTime getCurrentDateTime()
+        {
+            return DateTime.Now;
+        }
+
+        //calculate penalty fee
+        double calculatePenaltyFee(DateTime retDateTime, DateTime endDate, Booking ongoingBooking)
+        {
+            double penaltyFee = 0;
+            TimeSpan overTime = retDateTime - endDate;
+            double totalFee = ongoingBooking.Payment.TotalFee; //get current total cost of booking
+            penaltyFee = totalFee * 0.20 * overTime.Hours;
+            penaltyFee = Math.Round(penaltyFee, 2);
+            return penaltyFee;
+        }
+        void displayPenaltyFee(double penaltyFee)
+        {
+            string message = "Penalty Fee for late return: " + penaltyFee;
+            Console.WriteLine(message);
+        }
+        //prompt check for damages
+        string promptCheckForDamages()
+        {
+            Console.WriteLine("Please check for damages. If there are damages, enter 'Has Damages'. Else enter 'No Damages'.");
+            string damages = Console.ReadLine().ToLower();
+            while (damages != "has damages" && damages != "no damages")
+            {
+                Console.WriteLine("Invalid input. Try again.");
+                Console.WriteLine("Please check for damages. If there are damages, enter 'Has Damages'. Else enter 'No Damages'.");
+                damages = Console.ReadLine();
+            }
+            return damages;
+        }
         double updateDamages(string damage)
         {
-            if (damage == "has damages")
+            double damageFee = 0;
+            if (damage == "Has Damages")
             {
-                double fee = reportAccident();
-                return fee;
+                damageFee = reportAccident();
             }
-            else return 0;
+            return damageFee;
+
         }
 
         double reportAccident()
         {
-            Booking booking = getOngoingBooking(renter);
+            Booking booking = getOngoingBooking();
             booking.Payment.AdditionalCharge.DamageFee += 100;
             booking.Payment.TotalFee += 100;
             return 100;
+        }
+        void displayNoOutstandingFees()
+        {
+            Console.WriteLine("No outstanding fees.");
+        }
+
+
+        Booking getPaidBooking()
+        {
+            Booking ongoingBooking = null;
+            foreach (Booking booking in renter.Bookings)
+            {
+                if (booking.Status == "Confirmed")
+                {
+                    ongoingBooking = booking;
+                }
+
+                else continue;
+            }
+            return ongoingBooking;
+        }
+
+        Booking getUnpaidBooking()
+        {
+            Booking unpaidBooking = null;
+            foreach (Booking booking in renter.Bookings)
+            {
+                if (booking.Status == "Pending" || booking.Status == "Picked Up" || booking.Status == "Completed")
+                {
+                    unpaidBooking = booking;
+                }
+
+                else continue;
+            }
+            return unpaidBooking;
+        }
+
+        //pickup car
+        void PickUpCar()
+        {
+            Booking booking = getPaidBooking();
+
+            booking.Status = "Picked Up";
+            Console.WriteLine("Pickup confirmed.");
         }
     }
 }
@@ -1469,91 +1559,6 @@ void displayUserDetails(User user)
         Car_Owner carOwner = ((Car_Owner)user);
         Console.WriteLine($"Licence: {carOwner.License}");
     }
-}
-
-//display method
-void display(string message)
-{
-    Console.WriteLine(message);
-}
-    
-
-// get ongoing bookings
-Booking getOngoingBooking(Renter user)
-{
-    Booking ongoingBooking = null;
-    foreach (Booking booking in user.Bookings)
-    {
-        if (booking.Status == "Picked Up")
-        {
-            ongoingBooking = booking;
-        }
-
-        else continue;
-    }
-    return ongoingBooking;
-}
-
-Booking getPaidBooking(Renter user)
-{
-    Booking ongoingBooking = null;
-    foreach (Booking booking in user.Bookings)
-    {
-        if (booking.Status == "Confirmed")
-        {
-            ongoingBooking = booking;
-        }
-
-        else continue;
-    }
-    return ongoingBooking;
-}
-
-Booking getUnpaidBooking(Renter user)
-{
-    Booking unpaidBooking = null;
-    foreach (Booking booking in user.Bookings)
-    {
-        if (booking.Status == "Pending" || booking.Status == "Picked Up" || booking.Status == "Completed")
-        {
-            unpaidBooking = booking;
-        }
-
-        else continue;
-    }
-    return unpaidBooking;
-}
-
-//calculate penalty fee
-double calculatePenaltyFee(DateTime retDateTime, DateTime endDate, Booking ongoingBooking)
-{
-    double penaltyFee = 0;
-    TimeSpan overTime = retDateTime - endDate;
-    double totalFee = ongoingBooking.Payment.TotalFee; //get current total cost of booking
-    penaltyFee = totalFee * 0.20 * overTime.Hours;
-    penaltyFee = Math.Round(penaltyFee, 2);
-    return penaltyFee;
-}
-
-string promptCheckForDamages()
-{
-    Console.WriteLine("Please check for damages. If there are damages, enter 'Has Damages'. Else enter 'No Damages'.");
-    string damages = Console.ReadLine().ToLower();
-    while (damages != "has damages" && damages != "no damages")
-    {
-        Console.WriteLine("Invalid input. Try again.");
-        Console.WriteLine("Please check for damages. If there are damages, enter 'Has Damages'. Else enter 'No Damages'.");
-        damages = Console.ReadLine();
-    }
-    return damages;
-}
-
-void PickUpCar(Renter user)
-{
-    Booking booking = getPaidBooking(user);
-
-    booking.Status = "Picked Up";
-    Console.WriteLine("Pickup confirmed.");
 }
 
 // validate payment method exists
