@@ -922,24 +922,16 @@ if (user != null)
                         Console.WriteLine("Please enter the end date and time slot for your booking (yyyy-MM-dd hh:mm tt): ");
                         endDateTime = Console.ReadLine();
 
-                        if (!selectedCar.UnavailableDates.Contains(endDateTime) && availableDates.IndexOf(endDateTime) != 0 && availableDates.Contains(endDateTime))
-                        {
-                            DateTime startDate = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null);
-                            DateTime endDate = DateTime.ParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null);
+                        DateTime startDate = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null);
+                        DateTime endDate = DateTime.ParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null);
 
-                            if (endDate > startDate)
-                            {
-                                break;
-                            }
-                            else
-                            {
-                                Console.WriteLine("End date and time must be after the start date and time. Please try again.");
-                                Console.WriteLine();
-                            }
+                        if (!selectedCar.UnavailableDates.Contains(endDateTime) && availableDates.IndexOf(endDateTime) != 0 && availableDates.Contains(endDateTime) && endDate > startDate)
+                        {
+                            break;
                         }
                         else
                         {
-                            Console.WriteLine("Invalid end date and time or it is unavailable, or it is the first available date. Please try again.");
+                            Console.WriteLine("Invalid end date and time or it is unavailable, or it is the first available date, or end date and time is before start date and time. Please try again.");
                             Console.WriteLine();
                         }
                     }
