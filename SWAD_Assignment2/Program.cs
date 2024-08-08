@@ -1315,8 +1315,8 @@ if (user != null)
             }
             else
             {
-                string message = "No ongoing bookings that require payment";
-                //display(message);
+                Console.WriteLine("No ongoing bookings that require payment");
+                
             }
             
         }
@@ -1375,23 +1375,24 @@ if (user != null)
                     {
                         displayNoOutstandingFees();
                     }
-                    string status = "Completed";
-                    booking.updateBookingStatus(status);
-                    string message = "Rental " + status;
-                    //display(message);
+                    string status = booking.getBookingStatus();
+                    if (status != "All Expenses Paid For")
+                    {
+                        status = "Completed";
+                        booking.updateBookingStatus(status);
+                    }
+                    displayRentalCompleted();
                     return;
                 }
                 else
                 {
-                    string message = "Wrong return method. Returning to main menu.";
-                    //display(message);
+                    displayIncorrectReturnMethod();
                     return;
                 }
             }
             else
             {
-                string message = "No ongoing bookings.";
-                //display(message);
+                displayNoOngoingBookings();
                 return;
             }
 
@@ -1448,7 +1449,7 @@ if (user != null)
         double updateDamages(string damage)
         {
             double damageFee = 0;
-            if (damage == "Has Damages")
+            if (damage == "has damages")
             {
                 damageFee = reportAccident();
             }
@@ -1467,7 +1468,18 @@ if (user != null)
         {
             Console.WriteLine("No outstanding fees.");
         }
-
+        void displayRentalCompleted()
+        {
+            Console.WriteLine("Rental Completed");
+        }
+        void displayIncorrectReturnMethod()
+        {
+            Console.WriteLine("Wrong return method. Returning to main menu.");
+        }
+        void displayNoOngoingBookings()
+        {
+            Console.WriteLine("No ongoing bookings.");
+        }
 
         Booking getPaidBooking()
         {

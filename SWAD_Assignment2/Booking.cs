@@ -90,7 +90,10 @@ namespace SWAD_Assignment2
         {
             payment.TotalFee += fee;
         }
-
+        public string getBookingStatus()
+        {
+            return status;
+        }
         public void updateBookingStatus(string status)
         {
             this.status = status;
