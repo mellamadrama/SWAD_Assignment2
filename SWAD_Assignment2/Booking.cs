@@ -68,7 +68,19 @@ namespace SWAD_Assignment2
             this.payment = payment;
             this.car = car;
         }
-
+        public ReturnMethod getReturnMethod()
+        {
+            return returnMethod;
+        }
+        public void setDateTimeReturn(DateTime dateTimeReturn)
+        {
+            SelfReturn selfReturn = (SelfReturn)returnMethod;
+            selfReturn.DateTimeReturn = dateTimeReturn;
+        }
+        public DateTime getEndDate()
+        {
+            return endDate;
+        }
         public void updatePenaltyFee(double penaltyFee)
         {
             payment.AdditionalCharge.PenaltyFee = penaltyFee;
