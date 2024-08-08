@@ -882,6 +882,63 @@ if (user != null)
             return (returnMethod, deliveryFee);
         }
 
+        (DateTime, DateTime, TimeSpan, double, double, double) getBookingDetails(string startDateTime, string endDateTime, Car selectedCar, double deliveryFee) {
+            DateTime startTime = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null);
+            DateTime endTime = DateTime.ParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null);
+            TimeSpan duration = endTime - startTime;
+            double totalHours = (double)duration.TotalHours;
+            double totalCharge = totalHours * (double)selectedCar.Charge;
+            double totalDeliveryFee = deliveryFee;
+
+            return (startTime, endTime, duration, totalHours, totalCharge, totalDeliveryFee);
+        }
+
+        void displayBookingDetails(Car selectedCar, PickUpMethod pickUpMethod, ReturnMethod returnMethod, DateTime startDateTime, DateTime endDateTime, TimeSpan duration, double totalHours, double totalCharge, double totalDeliveryFee)
+        {
+            Console.WriteLine();
+            Console.WriteLine("Booking successfully made!");
+            Console.WriteLine();
+
+            Console.WriteLine("Booking Details:");
+            Console.WriteLine($"Car License Plate: {selectedCar.LicensePlate}");
+            Console.WriteLine($"Booking Start Date and Time: {startDateTime}");
+            Console.WriteLine($"Booking End Date and Time: {endDateTime}");
+            Console.WriteLine();
+
+            if (pickUpMethod is Pickup pickup)
+            {
+                Console.WriteLine("Pickup & Return");
+                Console.WriteLine($"Pickup Method: Self-Pickup");
+                Console.WriteLine($"Pickup Date and Time: {pickup.DateTimePickup}");
+                Console.WriteLine($"Pickup Location: {pickup.PickupLocation}");
+            }
+            else if (pickUpMethod is DeliverCar deliverCar)
+            {
+                Console.WriteLine("Pickup & Return");
+                Console.WriteLine($"Pickup Method: Delivery");
+                Console.WriteLine($"Delivery Date and Time: {deliverCar.DateTimeDeliver}");
+                Console.WriteLine($"Delivery Location: {deliverCar.DeliveryLocation}");
+            }
+
+            if (returnMethod is SelfReturn selfReturnMethod)
+            {
+                Console.WriteLine($"Return Method: Self-Return");
+                Console.WriteLine($"Return Date and Time: {selfReturnMethod.DateTimeReturn}");
+                Console.WriteLine($"Return Location: {selfReturnMethod.ICarReturnLocation}");
+            }
+            else if (returnMethod is DeliveryReturn deliveryReturnMethod)
+            {
+                Console.WriteLine($"Return Method: Delivery Return");
+                Console.WriteLine($"Return Date and Time: {deliveryReturnMethod.DateTimeReturnDelivery}");
+                Console.WriteLine($"Return Location: {deliveryReturnMethod.ReturnLocation}");
+            }
+
+            Console.WriteLine("Amount to pay");
+            Console.WriteLine($"Total Charge: {totalCharge:C}");
+            Console.WriteLine($"Total Delivery Fee: {totalDeliveryFee:C}");
+            Console.WriteLine($"Final Total: {(totalCharge + totalDeliveryFee):C}");
+        }
+
         void MakeBooking(Car selectedCar)
         {
             bool redoBooking = true;
@@ -1165,56 +1222,10 @@ if (user != null)
                         Console.WriteLine();
                     }
                 }
-                DateTime startTime = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null);
-                DateTime endTime = DateTime.ParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null);
-                TimeSpan duration = endTime - startTime;
-                double totalHours = (double)duration.TotalHours;
-                double totalCharge = totalHours * (double)selectedCar.Charge;
-                double totalDeliveryFee = deliveryFee;
 
-                Console.WriteLine();
-                Console.WriteLine("Booking successfully made!");
-                Console.WriteLine();
+                (DateTime startTime, DateTime endTime, TimeSpan duration, double totalHours, double totalCharge, double totalDeliveryFee) = getBookingDetails(startDateTime, endDateTime, selectedCar, deliveryFee);
 
-                Console.WriteLine("Booking Details:");
-                Console.WriteLine($"Car License Plate: {selectedCar.LicensePlate}");
-                Console.WriteLine($"Booking Start Date and Time: {startDateTime}");
-                Console.WriteLine($"Booking End Date and Time: {endDateTime}");
-                Console.WriteLine();
-
-                if (pickUpMethod is Pickup pickup)
-                {
-                    Console.WriteLine("Pickup & Return");
-                    Console.WriteLine($"Pickup Method: Self-Pickup");
-                    Console.WriteLine($"Pickup Date and Time: {pickup.DateTimePickup}");
-                    Console.WriteLine($"Pickup Location: {pickup.PickupLocation}");
-                }
-                else if (pickUpMethod is DeliverCar deliverCar)
-                {
-                    Console.WriteLine("Pickup & Return");
-                    Console.WriteLine($"Pickup Method: Delivery");
-                    Console.WriteLine($"Delivery Date and Time: {deliverCar.DateTimeDeliver}");
-                    Console.WriteLine($"Delivery Location: {deliverCar.DeliveryLocation}");
-                }
-
-                if (returnMethod is SelfReturn selfReturnMethod)
-                {
-                    Console.WriteLine($"Return Method: Self-Return");
-                    Console.WriteLine($"Return Date and Time: {selfReturnMethod.DateTimeReturn}");
-                    Console.WriteLine($"Return Location: {selfReturnMethod.ICarReturnLocation}");
-                }
-                else if (returnMethod is DeliveryReturn deliveryReturnMethod)
-                {
-                    Console.WriteLine($"Return Method: Delivery Return");
-                    Console.WriteLine($"Return Date and Time: {deliveryReturnMethod.DateTimeReturnDelivery}");
-                    Console.WriteLine($"Return Location: {deliveryReturnMethod.ReturnLocation}");
-                }
-
-                Console.WriteLine("Amount to pay");
-                Console.WriteLine($"Total Charge: {totalCharge:C}");
-                Console.WriteLine($"Total Delivery Fee: {totalDeliveryFee:C}");
-                Console.WriteLine($"Final Total: {(totalCharge + totalDeliveryFee):C}");
-                AdditionalCharge additionalCharge = new AdditionalCharge(0, 0, totalDeliveryFee);
+                displayBookingDetails(selectedCar, pickUpMethod, returnMethod, startTime, endTime, duration, totalHours, totalCharge, totalDeliveryFee);
 
                 while (true)
                 {
@@ -1224,8 +1235,7 @@ if (user != null)
 
                     if (choice == "C")
                     {
-                        Console.WriteLine();
-                        Console.WriteLine("Booking Confirmed!");
+                        AdditionalCharge additionalCharge = new AdditionalCharge(0, 0, totalDeliveryFee);
                         Booking booking = new Booking
                         {
                             BookingId = Guid.NewGuid().ToString(),
@@ -1239,6 +1249,10 @@ if (user != null)
                         };
 
                         renter.Bookings.Add(booking);
+
+                        Console.WriteLine();
+                        Console.WriteLine("Booking Confirmed!");
+
                         redoBooking = false;
                         Console.WriteLine();
                         Console.WriteLine("Continue to Payment");
@@ -1288,11 +1302,14 @@ if (user != null)
             Booking booking = getUnpaidBooking();
             if (booking != null)
             {
+                string status = getBookingStatus(booking);
+
                 displayBooking(booking);
                 string name = user.FullName;
 
-                Console.WriteLine("Confirm payment amount? (yes/no) ");
-                string res = Console.ReadLine();
+                promptProceedPayment();
+
+                string res = proceedPayment(); 
 
                 if (res != "yes")
                 {
@@ -1300,10 +1317,16 @@ if (user != null)
                     return;
                 }
 
+                Console.WriteLine("Proceed with payment");
+                Console.WriteLine();
+
+                promptPaymentMethod();
+
+                string method = choosePaymentMethod();
+
                 (PaymentMethod selectedPaymentMethod, double accBalance) = validatePaymentMethod();
 
-
-                if (booking.Status == "Pending")
+                if (status == "Pending")
                 {
                     while (accBalance < booking.Payment.TotalFee + booking.Payment.AdditionalCharge.DeliveryFee)
                     {
@@ -1313,10 +1336,10 @@ if (user != null)
 
                     selectedPaymentMethod.DeductBalance(booking.Payment.TotalFee);
 
-                    string status = "Confirmed";
+                    status = "Confirmed";
                     booking.updateBookingStatus(status);
                 }
-                else if (booking.Status == "Picked Up" || booking.Status == "Completed")
+                else if (status == "Picked Up" || booking.Status == "Completed")
                 {
                     while (accBalance < booking.Payment.AdditionalCharge.PenaltyFee + booking.Payment.AdditionalCharge.DamageFee)
                     {
@@ -1337,6 +1360,22 @@ if (user != null)
                 
             }
             
+        }
+
+        string getBookingStatus(Booking booking)
+        {
+            return booking.Status;
+        }
+
+        void promptProceedPayment()
+        {
+            Console.WriteLine("Confirm payment amount? (yes/no) ");
+        }
+
+        string proceedPayment()
+        {
+            string res = Console.ReadLine();
+            return res;
         }
 
         //return car
@@ -1591,6 +1630,23 @@ void displayUserDetails(User user)
     }
 }
 
+void promptPaymentMethod()
+{
+    Console.WriteLine("Proceed with payment");
+    Console.WriteLine();
+
+    Console.WriteLine("1. Digital Wallet");
+    Console.WriteLine("2. Debit Card");
+    Console.WriteLine("3. Credit Card");
+    Console.Write("Select Payment Method: ");
+}
+
+string choosePaymentMethod()
+{
+    string method = Console.ReadLine();
+    return method;
+}
+
 // validate payment method exists
 (PaymentMethod, double) validatePaymentMethod()
 {
@@ -1601,12 +1657,9 @@ void displayUserDetails(User user)
         Console.WriteLine("Proceed with payment");
         Console.WriteLine();
 
-        Console.WriteLine("1. Digital Wallet");
-        Console.WriteLine("2. Debit Card");
-        Console.WriteLine("3. Credit Card");
-        Console.Write("Select Payment Method: ");
+        promptPaymentMethod();
 
-        string method = Console.ReadLine();
+        string method = choosePaymentMethod();
 
         while (method != "1" && method != "2" && method != "3")
         {
@@ -1621,13 +1674,13 @@ void displayUserDetails(User user)
 
             method = Console.ReadLine();
 
-            if (method != "1" && method != "2" && method != "3")
+            if (method != "Digital Wallet" && method != "Debit Card" && method != "Credit Card")
             {
                 Console.WriteLine("Invalid input! Please try again.");
             }
         }
 
-        if (method == "1")
+        if (method == "Digital Wallet")
         {
             Console.WriteLine();
             Console.Write("Enter wallet type: ");
@@ -1659,7 +1712,7 @@ void displayUserDetails(User user)
 
             return (digitalWallet, digitalWallet.Balance);
         }
-        else if (method == "2")
+        else if (method == "Debit Card")
         {
             string cardNum;
             do
@@ -1699,7 +1752,7 @@ void displayUserDetails(User user)
 
             return (debitCard, debitCard.Balance);
         }
-        else if (method == "3")
+        else if (method == "Credit Card")
         {
             string cardNum;
             do
