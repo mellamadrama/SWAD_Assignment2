@@ -573,7 +573,7 @@ if (user != null)
                 Console.Write("Enter Hourly Charge ($): ");
                 string Charge = Console.ReadLine();
 
-                if (float.TryParse(Charge, NumberStyles.Float, CultureInfo.InvariantCulture, out charge))
+                if (float.TryParse(Charge, NumberStyles.Float, CultureInfo.InvariantCulture, out charge) && charge >= 0)
                 {
                     // Round the charge to 2 decimal places
                     charge = (float)Math.Round(charge, 2);
@@ -1398,7 +1398,7 @@ if (user != null)
 
         double updateDamages(string damage)
         {
-            if (damage == "Has Damages")
+            if (damage == "has damages")
             {
                 double fee = reportAccident();
                 return fee;
