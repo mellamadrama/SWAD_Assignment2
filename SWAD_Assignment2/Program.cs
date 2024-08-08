@@ -1308,6 +1308,7 @@ if (user != null)
                     double additionalCharge = booking.Payment.AdditionalCharge.PenaltyFee + booking.Payment.AdditionalCharge.DamageFee;
 
                     selectedPaymentMethod.DeductBalance(additionalCharge);
+                    booking.Status = "All Expenses Paid For";
                 }
 
                 sendReceipt((Renter)user);
@@ -1374,9 +1375,12 @@ if (user != null)
                         string NoFees = "No outstanding fees.";
                         display(NoFees);
                     }
-                    string status = "Completed";
-                    booking.updateBookingStatus(status);
-                    string message = "Rental " + status;
+                    if (booking.Status != "All Expenses Paid For")
+                    {
+                        string status = "Completed";
+                        booking.updateBookingStatus(status);
+                    }
+                    string message = "Rental Completed";
                     display(message);
                     return;
                 }
