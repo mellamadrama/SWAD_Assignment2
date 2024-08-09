@@ -946,6 +946,15 @@ if (user != null)
             Console.WriteLine($"{"License Plate:",-14} {selectedCar.LicensePlate,-9} {"Make:",-5} {selectedCar.CarMake,-15} {"Model:",-6} {selectedCar.Model,-9} {"Year:",-5} {selectedCar.Year,-6} {"Mileage:",-8} {selectedCar.Mileage,-14} {"Availability:",-13} {selectedCar.Availability} {"Charge per hour:",-16} ${selectedCar.Charge}");
         }
 
+        void displayAvailableDates(List<string> availableDates)
+        {
+            Console.WriteLine();
+            Console.WriteLine("Available Dates:");
+            foreach (var date in availableDates)
+            {
+                Console.WriteLine(date);
+            }
+        }
         void displayBookingConfirm()
         {
             Console.WriteLine();
@@ -1079,18 +1088,13 @@ if (user != null)
             bool redoBooking = true;
             while (redoBooking)
             {
-                var availableDates = selectedCar.AvailableDates.Except(selectedCar.UnavailableDates).ToList();
-                var originalAvailableDates = new List<string>(availableDates);
-                var originalUnavailableDates = new List<string>(selectedCar.UnavailableDates);
+                List<string> availableDates = selectedCar.getAvailableDates();
+                List<string> originalAvailableDates = availableDates;
+                List<string> originalUnavailableDates = selectedCar.getUnavailableDates();
 
                 displaySelectedCar(selectedCar);
 
-                Console.WriteLine();
-                Console.WriteLine("Available Dates:");
-                foreach (var date in availableDates)
-                {
-                    Console.WriteLine(date);
-                }
+                displayAvailableDates(availableDates);
 
                 bool filteringCompleted = false;
                 while (!filteringCompleted)
@@ -1168,18 +1172,7 @@ if (user != null)
                     }
                 }
 
-                int startIndex = availableDates.FindIndex(date => date == startDateTime);
-                int endIndex = availableDates.FindIndex(date => date == endDateTime);
-
-                if (startIndex != -1 && endIndex != -1 && startIndex <= endIndex)
-                {
-                    for (int i = startIndex; i <= endIndex; i++)
-                    {
-                        selectedCar.UnavailableDates.Add(availableDates[i]);
-                    }
-
-                    availableDates.RemoveRange(startIndex, endIndex - startIndex + 1);
-                }
+                selectedCar.updateCarAvailability(startDateTime, endDateTime, availableDates);
 
                 string pickupOrDelivery = "";
                 PickUpMethod pickUpMethod = null;
@@ -1373,8 +1366,7 @@ if (user != null)
 
                         redoBooking = true;
 
-                        selectedCar.AvailableDates = new List<string>(originalAvailableDates);
-                        selectedCar.UnavailableDates = new List<string>(originalUnavailableDates);
+                        selectedCar.resetCarAvailability(originalAvailableDates, originalUnavailableDates);
                         break;
                     }
                     else if (choice == "E")
@@ -1383,8 +1375,7 @@ if (user != null)
 
                         redoBooking = false;
 
-                        selectedCar.AvailableDates = new List<string>(originalAvailableDates);
-                        selectedCar.UnavailableDates = new List<string>(originalUnavailableDates);
+                        selectedCar.resetCarAvailability(originalAvailableDates, originalUnavailableDates);
                         return;
                     }
                     else

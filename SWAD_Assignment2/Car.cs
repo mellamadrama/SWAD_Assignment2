@@ -112,7 +112,33 @@ namespace SWAD_Assignment2
             this.unavailableDates = new List<string>();
             this.photoList = photoList;
         }
+        public List<string> getAvailableDates()
+        {
+            return availableDates.Except(unavailableDates).ToList();
+        }
+        public List<string> getUnavailableDates()
+        {
+            return unavailableDates;
+        }
+        public void updateCarAvailability(string startDateTime, string endDateTime, List<string> availableDates)
+        {
+            int startIndex = availableDates.FindIndex(date => date == startDateTime);
+            int endIndex = availableDates.FindIndex(date => date == endDateTime);
 
-       
+            if (startIndex != -1 && endIndex != -1 && startIndex <= endIndex)
+            {
+                for (int i = startIndex; i <= endIndex; i++)
+                {
+                    unavailableDates.Add(availableDates[i]);
+                }
+
+                availableDates.RemoveRange(startIndex, endIndex - startIndex + 1);
+            }
+        }
+        public void resetCarAvailability(List<string> originalAvailableDates, List<string> originalUnavailableDates)
+        {
+            AvailableDates = new List<string>(originalAvailableDates);
+            UnavailableDates = new List<string>(originalUnavailableDates);
+        }
     }
 }
