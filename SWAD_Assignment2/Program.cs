@@ -939,21 +939,86 @@ if (user != null)
             Console.WriteLine($"Final Total: {(totalCharge + totalDeliveryFee):C}");
         }
 
+        void displaySelectedCar(Car selectedCar)
+        {
+            Console.WriteLine();
+            Console.WriteLine("Car Details:");
+            Console.WriteLine($"{"License Plate:",-14} {selectedCar.LicensePlate,-9} {"Make:",-5} {selectedCar.CarMake,-15} {"Model:",-6} {selectedCar.Model,-9} {"Year:",-5} {selectedCar.Year,-6} {"Mileage:",-8} {selectedCar.Mileage,-14} {"Availability:",-13} {selectedCar.Availability} {"Charge per hour:",-16} ${selectedCar.Charge}");
+        }
+
+        void displayBookingConfirm()
+        {
+            Console.WriteLine();
+            Console.WriteLine("Booking Confirmed!");
+
+            Console.WriteLine();
+            Console.WriteLine("Continue to Payment");
+        }
+
+        void displayRedoBooking()
+        {
+            Console.WriteLine();
+            Console.WriteLine("Redoing the booking...");
+        }
+
+        void displayExitBooking()
+        {
+            Console.WriteLine();
+            Console.WriteLine("Booking Cancelled. Exiting.");
+        }
+
+        void displayRedoBookingInvalid()
+        {
+            Console.WriteLine();
+            Console.WriteLine("Invalid choice. Please enter 'C', 'R', or 'E'.");
+        }
+
+        void displayMonthInvalid()
+        {
+            Console.WriteLine("Invalid month. Please enter a number between 1 and 12.");
+            Console.WriteLine();
+        }
+
+        void displayInvalidFilterChoice()
+        {
+            Console.WriteLine("Invalid choice. Please enter 'Y' for yes or 'N' for no.");
+        }
+
+        void displayInvalidStartDateTime()
+        {
+            Console.WriteLine("Invalid start date and time or it is unavailable, or it is the last available date. Please try again.");
+            Console.WriteLine();
+        }
+
+        void displayInvalidEndDateTime()
+        {
+            Console.WriteLine("Invalid end date and time or it is unavailable, or it is the first available date, or end date and time is before start date and time. Please try again.");
+            Console.WriteLine();
+        }
+
+        void displayBookingTimeValid()
+        {
+            Console.WriteLine();
+            Console.WriteLine("Booking date is valid.");
+        }
+
+        void displayBookingTimeInvalid()
+        {
+            Console.WriteLine();
+            Console.WriteLine("Invalid booking range or it intersects with an unavailable date.");
+            Console.WriteLine();
+        }
+
         void MakeBooking(Car selectedCar)
         {
             bool redoBooking = true;
             while (redoBooking)
             {
-                redoBooking = false;
-
-                Console.WriteLine();
-                Console.WriteLine("Car Details:");
-                Console.WriteLine($"{"License Plate:",-14} {selectedCar.LicensePlate,-9} {"Make:",-5} {selectedCar.CarMake,-15} {"Model:",-6} {selectedCar.Model,-9} {"Year:",-5} {selectedCar.Year,-6} {"Mileage:",-8} {selectedCar.Mileage,-14} {"Availability:",-13} {selectedCar.Availability} {"Charge per hour:",-16} ${selectedCar.Charge}");
-
                 var availableDates = selectedCar.AvailableDates.Except(selectedCar.UnavailableDates).ToList();
                 var originalAvailableDates = new List<string>(availableDates);
                 var originalUnavailableDates = new List<string>(selectedCar.UnavailableDates);
-               
+
+                displaySelectedCar(selectedCar);
 
                 Console.WriteLine();
                 Console.WriteLine("Available Dates:");
@@ -988,8 +1053,7 @@ if (user != null)
                             }
                             else
                             {
-                                Console.WriteLine("Invalid month. Please enter a number between 1 and 12.");
-                                Console.WriteLine();
+                                displayMonthInvalid();
                             }
                         }
                     }
@@ -999,7 +1063,7 @@ if (user != null)
                     }
                     else
                     {
-                        Console.WriteLine("Invalid choice. Please enter 'Y' for yes or 'N' for no.");
+                        displayInvalidFilterChoice();
                     }
                 }
 
@@ -1019,8 +1083,7 @@ if (user != null)
                         }
                         else
                         {
-                            Console.WriteLine("Invalid start date and time or it is unavailable, or it is the last available date. Please try again.");
-                            Console.WriteLine();
+                            displayInvalidStartDateTime();
                         }
                     }
 
@@ -1038,22 +1101,18 @@ if (user != null)
                         }
                         else
                         {
-                            Console.WriteLine("Invalid end date and time or it is unavailable, or it is the first available date, or end date and time is before start date and time. Please try again.");
-                            Console.WriteLine();
+                            displayInvalidEndDateTime();
                         }
                     }
 
                     if (IsBookingTimeValid(startDateTime, endDateTime, selectedCar))
                     {
-                        Console.WriteLine();
-                        Console.WriteLine("Booking date is valid.");
+                        displayBookingTimeValid();
                         break;
                     }
                     else
                     {
-                        Console.WriteLine();
-                        Console.WriteLine("Invalid booking range or it intersects with an unavailable date.");
-                        Console.WriteLine();
+                        displayBookingTimeInvalid();
                     }
                 }
 
@@ -1235,6 +1294,8 @@ if (user != null)
 
                     if (choice == "C")
                     {
+                        redoBooking = false;
+
                         AdditionalCharge additionalCharge = new AdditionalCharge(0, 0, totalDeliveryFee);
                         Booking booking = new Booking
                         {
@@ -1250,37 +1311,33 @@ if (user != null)
 
                         renter.Bookings.Add(booking);
 
-                        Console.WriteLine();
-                        Console.WriteLine("Booking Confirmed!");
-
-                        redoBooking = false;
-                        Console.WriteLine();
-                        Console.WriteLine("Continue to Payment");
+                        displayBookingConfirm();
                         MakePayment();
                         break;
                     }
                     else if (choice == "R")
                     {
-                        Console.WriteLine();
-                        Console.WriteLine("Redoing the booking...");
+                        displayRedoBooking();
+
+                        redoBooking = true;
+
                         selectedCar.AvailableDates = new List<string>(originalAvailableDates);
                         selectedCar.UnavailableDates = new List<string>(originalUnavailableDates);
-                        redoBooking = true;
                         break;
                     }
                     else if (choice == "E")
                     {
-                        Console.WriteLine();
-                        Console.WriteLine("Booking Cancelled. Exiting.");
+                        displayExitBooking();
+
+                        redoBooking = false;
+
                         selectedCar.AvailableDates = new List<string>(originalAvailableDates);
                         selectedCar.UnavailableDates = new List<string>(originalUnavailableDates);
-                        redoBooking = false;
                         return;
                     }
                     else
                     {
-                        Console.WriteLine();
-                        Console.WriteLine("Invalid choice. Please enter 'C', 'R', or 'E'.");
+                        displayRedoBookingInvalid();
                     }
                 }
             }
