@@ -112,5 +112,7 @@ namespace SWAD_Assignment2
             this.unavailableDates = new List<string>();
             this.photoList = photoList;
         }
+
+       
     }
 }

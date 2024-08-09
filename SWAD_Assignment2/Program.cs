@@ -1009,6 +1009,71 @@ if (user != null)
             Console.WriteLine();
         }
 
+        void promptFilterChoice()
+        {
+            Console.WriteLine();
+            Console.WriteLine("Do you want to filter the available time slots by selecting a specific month? ‘Y’ or ‘N’");
+        }
+
+        string selectFilterChoice()
+        {
+            string filterChoice = Console.ReadLine().Trim().ToUpper();
+            Console.WriteLine();
+            return filterChoice;
+        }
+
+        void promptFilterMonth()
+        {
+            Console.WriteLine("Enter the month number 1-12 (January-December) you want to filter:");
+        }
+
+        List<string> FilteredDates(int month, List<string> availableDates)
+        {
+            return availableDates.Where(date => DateTime.TryParse(date, out DateTime dt) && dt.Month == month).ToList();
+        }
+
+        void displayFilteredDates(int month, List<string> filteredDates)
+        {
+            string monthName = new DateTime(1, month, 1).ToString("MMMM");
+            Console.WriteLine();
+            Console.WriteLine($"Available dates for month {month} ({monthName}):");
+            foreach (var date in filteredDates)
+            {
+                Console.WriteLine(date);
+            }
+        }
+
+        void promptStartDateTimeSlot()
+        {
+            Console.WriteLine("Please enter the start date and time slot for your booking (yyyy-MM-dd hh:mm tt): ");
+        }
+
+        bool validateStartDateTimeSlot(string startDateTime, List<string> availableDates, Car selectedCar)
+        {
+            if (!selectedCar.UnavailableDates.Contains(startDateTime) && availableDates.IndexOf(startDateTime) != availableDates.Count - 1 && availableDates.Contains(startDateTime))
+            {
+                return true;
+            }
+            return false;
+        }
+
+        void promptEndDateTimeSlot()
+        {
+            Console.WriteLine("Please enter the end date and time slot for your booking (yyyy-MM-dd hh:mm tt): ");
+        }
+
+        bool validateEndDateTimeSlot(string startDateTime, string endDateTime, List<string> availableDates, Car selectedCar)
+        {
+            DateTime startDate, endDate;
+
+            if (DateTime.TryParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null, System.Globalization.DateTimeStyles.None, out startDate) &&
+                DateTime.TryParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null, System.Globalization.DateTimeStyles.None, out endDate) && !selectedCar.UnavailableDates.Contains(endDateTime) && availableDates.IndexOf(endDateTime) != 0 && availableDates.Contains(endDateTime) && endDate > startDate)
+            {
+                return true;
+            }
+            return false;
+        }
+
         void MakeBooking(Car selectedCar)
         {
             bool redoBooking = true;
@@ -1030,25 +1095,19 @@ if (user != null)
                 bool filteringCompleted = false;
                 while (!filteringCompleted)
                 {
-                    Console.WriteLine();
-                    Console.WriteLine("Do you want to filter the available time slots by selecting a specific month? ‘Y’ or ‘N’");
-                    string filterChoice = Console.ReadLine().Trim().ToUpper();
-                    Console.WriteLine();
+                    promptFilterChoice();
+                    string filterChoice = selectFilterChoice();
 
                     if (filterChoice == "Y")
                     {
                         while (true)
                         {
-                            Console.WriteLine("Enter the month number 1-12 (January-December) you want to filter:");
+                            promptFilterMonth();
                             if (int.TryParse(Console.ReadLine(), out int month) && month >= 1 && month <= 12)
                             {
-                                var filteredDates = availableDates.Where(date => DateTime.TryParse(date, out DateTime dt) && dt.Month == month).ToList();
+                                var filteredDates = FilteredDates(month, availableDates);
 
-                                Console.WriteLine($"Available dates for month {month}:");
-                                foreach (var date in filteredDates)
-                                {
-                                    Console.WriteLine(date);
-                                }
+                                displayFilteredDates(month, filteredDates);
                                 break;
                             }
                             else
@@ -1072,34 +1131,27 @@ if (user != null)
 
                 while (true)
                 {
-                    while (true)
+                    bool validStart = false;
+                    while (validStart == false)
                     {
-                        Console.WriteLine("Please enter the start date and time slot for your booking (yyyy-MM-dd hh:mm tt): ");
+                        promptStartDateTimeSlot();
                         startDateTime = Console.ReadLine();
 
-                        if (!selectedCar.UnavailableDates.Contains(startDateTime) && availableDates.IndexOf(startDateTime) != availableDates.Count - 1 && availableDates.Contains(startDateTime))
-                        {
-                            break;
-                        }
-                        else
+                        validStart = validateStartDateTimeSlot(startDateTime, availableDates, selectedCar);
+                        if (validStart == false)
                         {
                             displayInvalidStartDateTime();
                         }
                     }
 
-                    while (true)
+                    bool validEnd = false;
+                    while (validEnd == false)
                     {
-                        Console.WriteLine("Please enter the end date and time slot for your booking (yyyy-MM-dd hh:mm tt): ");
+                        promptEndDateTimeSlot();
                         endDateTime = Console.ReadLine();
 
-                        DateTime startDate = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null);
-                        DateTime endDate = DateTime.ParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null);
-
-                        if (!selectedCar.UnavailableDates.Contains(endDateTime) && availableDates.IndexOf(endDateTime) != 0 && availableDates.Contains(endDateTime) && endDate > startDate)
-                        {
-                            break;
-                        }
-                        else
+                        validEnd = validateEndDateTimeSlot(startDateTime, endDateTime, availableDates, selectedCar);
+                        if (validEnd == false)
                         {
                             displayInvalidEndDateTime();
                         }
