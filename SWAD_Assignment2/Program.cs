@@ -1083,14 +1083,107 @@ if (user != null)
             return false;
         }
 
+        void promptPickUpOption()
+        {
+            Console.WriteLine();
+            Console.WriteLine("Do you want to pick up the car yourself or have it delivered? Enter 'P' for pickup or 'D' for delivery: ");
+        }
+
+        void displayiCarLocations()
+        {
+            Console.WriteLine();
+            Console.WriteLine("List of Pickup Locations:");
+            for (int i = 0; i < locations.Count; i++)
+            {
+                Console.WriteLine($"{i + 1}. {locations[i]}");
+            }
+        }
+
+        void promptiCarLocationChoice()
+        {
+            Console.WriteLine();
+            Console.WriteLine("Enter the number of the location where you want to pick up the car: ");
+        }
+
+        void displayInvalidLocation()
+        {
+            Console.WriteLine("Invalid location number. Please try again.");
+            Console.WriteLine();
+        }
+
+        void promptDeliveryLocation()
+        {
+            Console.WriteLine();
+            Console.WriteLine("Enter the delivery location in this format: Postal Code, Address, Country: ");
+        }
+
+        string enterDeliveryLocation()
+        {
+            string deliveryLocation = Console.ReadLine();
+            return deliveryLocation;
+        }
+
+        void displayInvalidPostalCode()
+        {
+            Console.WriteLine("Invalid postal code. It must be exactly 6 digits long and contain only numbers. Please try again.");
+            Console.WriteLine();
+        }
+
+        void displayInvalidCountry()
+        {
+            Console.WriteLine("Invalid location. Ensure the country is 'Singapore' and the format is correct. Please try again.");
+                                Console.WriteLine();
+        }
+
+        void displayInvalidPickupChoice()
+        {
+            Console.WriteLine("Invalid choice. Please enter 'P' for pickup or 'D' for delivery.");
+            Console.WriteLine();
+        }
+
+        void promptReturnOption()
+        {
+            Console.WriteLine("Do you want to return the car yourself or have it picked up? Enter 'S' for self-return or 'D' for delivery return: ");
+        }
+
+        void promptiCarLocationChoiceReturn()
+        {
+            Console.WriteLine();
+            Console.WriteLine("Enter the number of the location where you want to return the car: ");
+        }
+
+        void promptReturnDeliveryLocation()
+        {
+            Console.WriteLine();
+            Console.WriteLine("Enter the return delivery location in this format: Postal Code, Address, Country: ");
+        }
+
+        void displayInvalidReturnChoice()
+        {
+            Console.WriteLine("Invalid choice. Please enter 'S' for self-return or 'D' for delivery return.");
+            Console.WriteLine();
+        }
+
+        void promptConfirmBooking()
+        {
+            Console.WriteLine();
+            Console.WriteLine("Would you like to: [C]onfirm the booking, [R]edo the booking, or [E]xit and cancel the booking?");
+        }
+
+        string enterConfirmBooking()
+        {
+            string choice = Console.ReadLine().ToUpper();
+            return choice;
+        }
+
         void MakeBooking(Car selectedCar)
         {
             bool redoBooking = true;
             while (redoBooking)
             {
                 List<string> availableDates = selectedCar.getAvailableDates();
-                List<string> originalAvailableDates = availableDates;
-                List<string> originalUnavailableDates = selectedCar.getUnavailableDates();
+                List<string> originalAvailableDates = new List<string>(availableDates);
+                List<string> originalUnavailableDates = new List<string>(selectedCar.getUnavailableDates());
 
                 displaySelectedCar(selectedCar);
 
@@ -1179,26 +1272,19 @@ if (user != null)
                 double deliveryFee = 0;
 
                 while (pickupOrDelivery != "P" && pickupOrDelivery != "D")
-                { 
-                    Console.WriteLine();
-                    Console.WriteLine("Do you want to pick up the car yourself or have it delivered? Enter 'P' for pickup or 'D' for delivery: ");
+                {
+                    promptPickUpOption();
                     pickupOrDelivery = Console.ReadLine().Trim().ToUpper();
 
                     if (pickupOrDelivery == "P")
                     {
                         var locations = ReadLocationsFromCsv("iCar_Locations.csv");
 
-                        Console.WriteLine();
-                        Console.WriteLine("List of Pickup Locations:");
-                        for (int i = 0; i < locations.Count; i++)
-                        {
-                            Console.WriteLine($"{i + 1}. {locations[i]}");
-                        }
+                        displayiCarLocations();
 
                         while (true)
                         {
-                            Console.WriteLine();
-                            Console.WriteLine("Enter the number of the location where you want to pick up the car: ");
+                            promptiCarLocationChoice();
                             if (int.TryParse(Console.ReadLine(), out int locationIndex) && locationIndex >= 1 && locationIndex <= locations.Count)
                             {
                                 pickUpMethod = initialisePickUpMethod(startDateTime, pickUpMethod, locationIndex);
@@ -1206,8 +1292,7 @@ if (user != null)
                             }
                             else
                             {
-                                Console.WriteLine("Invalid location number. Please try again.");
-                                Console.WriteLine();
+                                displayInvalidLocation();
                             }
                         }
 
@@ -1217,9 +1302,8 @@ if (user != null)
 
                         while (true)
                         {
-                            Console.WriteLine();
-                            Console.WriteLine("Enter the delivery location in this format: Postal Code, Address, Country: ");
-                            string deliveryLocation = Console.ReadLine();
+                            promptDeliveryLocation();
+                            string deliveryLocation = enterDeliveryLocation();
 
                             string[] parts = deliveryLocation.Split(',');
                             if (parts.Length == 3 && parts[2].Trim().Equals("Singapore", StringComparison.OrdinalIgnoreCase))
@@ -1233,21 +1317,18 @@ if (user != null)
                                 }
                                 else
                                 {
-                                    Console.WriteLine("Invalid postal code. It must be exactly 6 digits long and contain only numbers. Please try again.");
-                                    Console.WriteLine();
+                                    displayInvalidPostalCode();
                                 }
                             }
                             else
                             {
-                                Console.WriteLine("Invalid location. Ensure the country is 'Singapore' and the format is correct. Please try again.");
-                                Console.WriteLine();
+                                displayInvalidCountry();
                             }
                         }
                     }
                     else
                     {
-                        Console.WriteLine("Invalid choice. Please enter 'P' for pickup or 'D' for delivery.");
-                        Console.WriteLine();
+                        displayInvalidPickupChoice();
                     }
                 }
                 Console.WriteLine();
@@ -1257,25 +1338,18 @@ if (user != null)
 
                 while (returnMethodChoice != "S" && returnMethodChoice != "D")
                 {
-                    Console.WriteLine("Do you want to return the car yourself or have it picked up? Enter 'S' for self-return or 'D' for delivery return: ");
+                    promptReturnOption();
                     returnMethodChoice = Console.ReadLine().Trim().ToUpper();
 
                     if (returnMethodChoice == "S")
                     {
-
-                        Console.WriteLine("Please select a return location:");
-
                         var locations = ReadLocationsFromCsv("iCar_Locations.csv");
 
-                        for (int i = 0; i < locations.Count; i++)
-                        {
-                            Console.WriteLine($"{i + 1}. {locations[i]}");
-                        }
+                        displayiCarLocations();
 
                         while (true)
                         {
-                            Console.WriteLine();
-                            Console.WriteLine("Enter the number of the location where you want to return the car: ");
+                            promptiCarLocationChoiceReturn();
                             if (int.TryParse(Console.ReadLine(), out int locationIndex) && locationIndex >= 1 && locationIndex <= locations.Count)
                             {
                                 returnMethod = initialiseReturnMethod(endDateTime, returnMethod, locationIndex);
@@ -1283,8 +1357,7 @@ if (user != null)
                             }
                             else
                             {
-                                Console.WriteLine("Invalid location number. Please try again.");
-                                Console.WriteLine();
+                                displayInvalidLocation();
                             }
                         }
                     }
@@ -1293,8 +1366,7 @@ if (user != null)
 
                         while (true)
                         {
-                            Console.WriteLine();
-                            Console.WriteLine("Enter the return delivery location in this format: Postal Code, Address, Country: ");
+                            promptReturnDeliveryLocation();
                             string returnLocation = Console.ReadLine();
 
                             string[] parts = returnLocation.Split(',');
@@ -1309,21 +1381,18 @@ if (user != null)
                                 }
                                 else
                                 {
-                                    Console.WriteLine("Invalid postal code. It must be exactly 6 digits long and contain only numbers. Please try again.");
-                                    Console.WriteLine();
+                                    displayInvalidPostalCode();
                                 }
                             }
                             else
                             {
-                                Console.WriteLine("Invalid location. Ensure the country is 'Singapore' and the format is correct. Please try again.");
-                                Console.WriteLine();
+                                displayInvalidCountry();
                             }
                         }
                     }
                     else
                     {
-                        Console.WriteLine("Invalid choice. Please enter 'S' for self-return or 'D' for delivery return.");
-                        Console.WriteLine();
+                        displayInvalidReturnChoice();
                     }
                 }
 
@@ -1333,9 +1402,8 @@ if (user != null)
 
                 while (true)
                 {
-                    Console.WriteLine();
-                    Console.WriteLine("Would you like to: [C]onfirm the booking, [R]edo the booking, or [E]xit and cancel the booking?");
-                    string choice = Console.ReadLine().ToUpper();
+                    promptConfirmBooking();
+                    string choice = enterConfirmBooking();
 
                     if (choice == "C")
                     {
