@@ -20,11 +20,16 @@ namespace SWAD_Assignment2
             Type = type;
             Balance = balance;
         }
+
+        public double getDigitalWalletBalance()
+        {
+            return Balance;
+        }
+
         public override void DeductBalance(double amount)
         {
             Balance -= amount;
             Console.WriteLine("Payment Successful!");
-            Console.WriteLine($"New Account Balance: {(Balance):C}");
         }
     }
 }

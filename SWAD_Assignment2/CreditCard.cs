@@ -23,11 +23,15 @@ namespace SWAD_Assignment2
             Bank = bank;
         }
 
+        public double getCreditLimit()
+        {
+            return Balance;
+        }
+
         public override void DeductBalance(double amount)
         {
             Balance -= amount;
             Console.WriteLine("Payment Successful!");
-            Console.WriteLine($"New Account Balance: {(Balance):C}");
         }
     }
 }

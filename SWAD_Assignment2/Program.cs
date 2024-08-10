@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Diagnostics.Metrics;
 using System.Formats.Asn1;
 using System.Globalization;
+using System.Security.Cryptography;
 using System.Xml.Linq;
 
 static List<User> LoadUsersFromCSV(string usercsvFilePath)
@@ -34,7 +35,7 @@ static List<User> LoadUsersFromCSV(string usercsvFilePath)
                 users.Add(new iCar_Admin(id, fullName, contactNum, email, password, dateOfBirth));
                 break;
             case "Car Owner":
-                users.Add(new Car_Owner(id, fullName, contactNum, email, password, dateOfBirth, licence, cars));
+                users.Add(new CarOwner(id, fullName, contactNum, email, password, dateOfBirth, licence, cars));
                 break;
             case "Renter":
                 users.Add(new Renter(id, fullName, contactNum, email, password, dateOfBirth, licence, licenseStatus, demeritPoints, bookings));
@@ -46,7 +47,7 @@ static List<User> LoadUsersFromCSV(string usercsvFilePath)
 }
 
 // populate insurance list 
-static List<Insurance> LoadInsuranceFromCSV(string insuranceCsvFilePath, Dictionary<int, string> companyDictionary)
+static List<Insurance> LoadInsuranceFromCSV(string insuranceCsvFilePath, Dictionary<int, InsuranceCompany> companyDictionary)
 {
     var insuranceList = new List<Insurance>();
 
@@ -54,22 +55,16 @@ static List<Insurance> LoadInsuranceFromCSV(string insuranceCsvFilePath, Diction
     {
         var values = line.Split(",");
         int branchNo = Convert.ToInt32(values[0].Trim());
-        string carPlateNo = values[1].Trim();
+        string licencePlate = values[1].Trim();
         int carOwnerId = Convert.ToInt32(values[2].Trim());
         DateTime expiryDate = Convert.ToDateTime(values[3].Trim());
 
-        if (companyDictionary.TryGetValue(branchNo, out var companyName))
+        if (companyDictionary.TryGetValue(branchNo, out var company))
         {
             var car = new Car
             {
                 CarOwnerId = carOwnerId,
-                LicensePlate = carPlateNo
-            };
-
-            var company = new Insurance_Company
-            {
-                BranchNo = branchNo,
-                CompanyName = companyName,
+                LicensePlate = licencePlate
             };
 
             var insurance = new Insurance
@@ -85,19 +80,30 @@ static List<Insurance> LoadInsuranceFromCSV(string insuranceCsvFilePath, Diction
     return insuranceList;
 }
 
-static Dictionary<int, string> LoadCompanyDictionary(string icCsvFilePath)
+// Load all insurance companies
+static Dictionary<int, InsuranceCompany> LoadCompanyDictionary(string icCsvFilePath)
 {
-    var companyDictionary = new Dictionary<int, string>();
+    var companyDictionary = new Dictionary<int, InsuranceCompany>();
 
     foreach (var line in File.ReadLines(icCsvFilePath).Skip(1))
     {
         var values = line.Split(",");
         int branchNo = Convert.ToInt32(values[0].Trim());
         string companyName = values[1].Trim();
+        string telephone = values[2].Trim();
+        string address = values[3].Trim();
+        string emailAddress = values[4].Trim();
 
         if (!companyDictionary.ContainsKey(branchNo))
         {
-            companyDictionary.Add(branchNo, companyName);
+            companyDictionary.Add(branchNo, new InsuranceCompany
+            {
+                BranchNo = branchNo,
+                CompanyName = companyName,
+                Telephone = telephone,
+                Address = address,
+                EmailAddress = emailAddress
+            });
         }
     }
 
@@ -119,31 +125,26 @@ static List<Car> LoadCarsFromCSV(string carCsvFilePath, List<string> dates, List
         int year = Convert.ToInt32(values[4].Trim());
         int mileage = Convert.ToInt32(values[5].Trim());
         string availability = values[6].Trim();
-        string status = values[7].Trim();
-        float charge = float.Parse(values[8].Trim());
+        float charge = float.Parse(values[7].Trim());
 
         Insurance insurance = null;
-        if (status == "Y")
-        {
-            insurance = insuranceList.FirstOrDefault(i => i.Car.LicensePlate == licensePlate && i.Car.CarOwnerId == ownerId);
-        }
 
         List<Booking> bookings = new List<Booking>(); // empty list of bookings 
 
         List<string> carPhotos = photoList.ContainsKey(licensePlate) ? photoList[licensePlate] : new List<string>();
 
-        var car = new Car(ownerId, licensePlate, carMake, model, year, mileage, availability, status, charge, insurance, bookings, carPhotos);
+        var car = new Car(ownerId, licensePlate, carMake, model, year, mileage, availability, charge, insurance, bookings, carPhotos);
 
         car.AvailableDates = new List<string>(dates);
 
-        if (values.Length > 9)
+        if (values.Length > 8)
         {
-            car.AvailableDates = values[9].Split(';').ToList();
+            car.AvailableDates = values[8].Split(';').ToList();
         }
 
-        if (values.Length > 10)
+        if (values.Length > 9)
         {
-            car.UnavailableDates = values[10].Split(';').ToList();
+            car.UnavailableDates = values[9].Split(';').ToList();
         }
 
         cars.Add(car);
@@ -267,6 +268,7 @@ var cars = LoadCarsFromCSV(carCsvFilePath, dates, insuranceList, photoList);
 var locations = ReadLocationsFromCsv(locationsCsvFilePath);
 
 User user = null;
+InsuranceCompany selectedCompany;
 int emailAttempts = 0;
 bool emailValid = false;
 string email = string.Empty;
@@ -347,7 +349,7 @@ if (user != null)
 {
     displayUserDetails(user);
 
-    if (user is Car_Owner carOwner)
+    if (user is CarOwner carOwner)
     {
         while (true)
         {
@@ -361,7 +363,7 @@ if (user != null)
                     ViewCars(cars, carOwner);
                     break;
                 case "2":
-                    RegisterCar(cars, insuranceList, carMakes, carOwner);
+                    selectRegisterCar();
                     break;
                 case "3":
                     Console.WriteLine("Logging out...");
@@ -377,34 +379,31 @@ if (user != null)
                     break;
             }
         }
-        static void ViewCars(List<Car> cars, Car_Owner carOwner)
+        void ViewCars(List<Car> cars, CarOwner carOwner)
         {
             var ownerCars = cars.Where(c => c.CarOwnerId == carOwner.Id).ToList();
             Console.WriteLine();
             Console.WriteLine("====Cars Owned====");
             foreach (var car in ownerCars)
             {
-                Console.WriteLine($"{"License Plate:",-14} {car.LicensePlate,-9} {"Make:",-5} {car.CarMake,-15} {"Model:",-6} {car.Model,-9} {"Year:",-5} {car.Year,-6} {"Mileage:",-8} {car.Mileage} {"Availability:",-15} {car.Availability} {"Insurance Status:",-5} {car.InsuranceStatus}");
+                Console.WriteLine($"{"License Plate:",-14} {car.LicensePlate,-9} {"Make:",-5} {car.CarMake,-15} {"Model:",-6} {car.Model,-9} {"Year:",-5} {car.Year,-6} {"Mileage:",-8} {car.Mileage} {"Availability:",-15} {car.Availability}");
             }
         }
-
-        static bool IsValidFileType(string fileName)
+        bool IsValidFileType(string fileName)
         {
             string[] allowedExtensions = { ".jpg", ".jpeg", ".png", ".pdf" };
             string fileExtension = System.IO.Path.GetExtension(fileName);
             return allowedExtensions.Contains(fileExtension);
         }
-
-        static void AppendCarToCSV(string carCsvFilePath, Car newCar)
+        void AppendCarToCSV(string carCsvFilePath, Car newCar)
         {
             using (var writer = new StreamWriter(carCsvFilePath, true))
             {
-                string line = $"{newCar.CarOwnerId},{newCar.LicensePlate},{newCar.CarMake},{newCar.Model},{newCar.Year},{newCar.Mileage},{newCar.Availability},{newCar.InsuranceStatus}";
+                string line = $"{newCar.CarOwnerId},{newCar.LicensePlate},{newCar.CarMake},{newCar.Model},{newCar.Year},{newCar.Mileage},{newCar.Availability},{newCar.Charge}";
                 writer.WriteLine(line);
             }
         }
-
-        static void AppendPhotosToCSV(string photoCsvFilePath, string carPlateNo, List<string> photoFiles)
+        void AppendPhotosToCSV(string photoCsvFilePath, string carPlateNo, List<string> photoFiles)
         {
             const int MaxPhotos = 5;
             var p = new List<string>(photoFiles);
@@ -426,28 +425,21 @@ if (user != null)
             }
         }
 
-        static void RegisterCar(List<Car> cars, List<Insurance> insuranceList, List<string> carMakes, Car_Owner carOwner)
+        // licence plate input
+        string enterLicencePlate()
         {
-            Console.WriteLine();
-
-            // prompt car owner for car details
-            Console.WriteLine("========Please enter car details========");
-
-            // Validate Car Plate Number
-            string carPlateNo;
             while (true)
             {
-                Console.Write("Enter Car Plate Number: ");
-                carPlateNo = Console.ReadLine();
-                if (!string.IsNullOrWhiteSpace(carPlateNo))
+                string carPlateNo = promptLicencePlate();
+                if (validateLicencePlate(carPlateNo))
                 {
                     if (cars.Any(c => c.LicensePlate == carPlateNo))
                     {
-                        Console.Write("Are you sure? This car plate number has already been registered. (Exit/Edit to re-enter Car plate number): ");
+                        Console.Write("This licence plate has already been registered. Type 'exit' to cancel or 'edit' to re-enter: ");
                         string response = Console.ReadLine().Trim().ToLower();
                         if (response == "exit")
                         {
-                            return;
+                            Environment.Exit(0);
                         }
                         else if (response == "edit")
                         {
@@ -455,81 +447,382 @@ if (user != null)
                         }
                         else
                         {
-                            Console.WriteLine("Invalid input. Please type 'Exit' or 'Edit'.");
+                            Console.WriteLine("Invalid input. Please type 'exit' or 'edit'.");
                         }
                     }
                     else
                     {
-                        break;
+                        return carPlateNo;
                     }
                 }
                 else
                 {
-                    Console.WriteLine("Invalid input. Car Plate Number cannot be empty.");
+                    displayInvalidLicencePlate();
                 }
             }
+        }
+        string promptLicencePlate()
+        {
+            Console.Write("Enter Car Plate Number: ");
+            return Console.ReadLine();
+        }
+        bool validateLicencePlate(string licencePlate)
+        {
+            return !string.IsNullOrWhiteSpace(licencePlate);
+        }
+        void displayInvalidLicencePlate()
+        {
+            Console.WriteLine("Invalid input.Licence Plate cannot be empty.");
+        }
 
-            // Validate Car Make
-            string carMake;
+        // car make input
+        string enterCarMake()
+        {
             while (true)
             {
-                Console.Write("Enter Car Make: ");
-                carMake = Console.ReadLine();
-                if (!string.IsNullOrWhiteSpace(carMake) && carMakes.Contains(carMake.ToLower()))
+                string carMake = promptCarMake();
+                if (validateCarMake(carMake))
                 {
-                    break;
+                    return carMake;
                 }
-                Console.WriteLine("Invalid input. Car Make cannot be empty or must be a valid car make.");
+                else
+                {
+                    displayInvalidCarMake();
+                }
             }
-            // Validate Car Model
-            string carModel;
+        }
+        string promptCarMake()
+        {
+            Console.Write("Enter Car Make: ");
+            return Console.ReadLine();
+        }
+        bool validateCarMake(string carMake)
+        {
+            return !string.IsNullOrWhiteSpace(carMake) && carMakes.Contains(carMake.ToLower());
+        }
+        void displayInvalidCarMake()
+        {
+            Console.WriteLine("Invalid input. Car Make cannot be empty or must be a valid car make.");
+        }
+
+        // car model input
+        string enterCarModel()
+        {
             while (true)
             {
-                Console.Write("Enter Car Model: ");
-                carModel = Console.ReadLine();
-                if (!string.IsNullOrWhiteSpace(carModel))
+                string carModel = promptCarModel();
+                if (validateCarModel(carModel))
                 {
-                    break;
+                    return carModel;
                 }
-                Console.WriteLine("Invalid input. Car Model cannot be empty.");
+                else
+                {
+                    displayInvalidModel();
+                }
             }
+        }
+        string promptCarModel()
+        {
+            Console.Write("Enter Car Model: ");
+            return Console.ReadLine();
+        }
+        bool validateCarModel(string carModel)
+        {
+            return !string.IsNullOrWhiteSpace(carModel);
+        }
+        void displayInvalidModel()
+        {
+            Console.WriteLine("Invalid input. Car Model cannot be empty.");
+        }
 
-            // Validate Car Year
+        // car year input
+        string promptYear()
+        {
+            Console.Write("Enter Car Year: ");
+            return Console.ReadLine();
+        }
+        int enterYear()
+        {
             int year;
             while (true)
             {
-                Console.Write("Enter Car Year: ");
-                string yearInput = Console.ReadLine();
-                if (int.TryParse(yearInput, out year) && year > 1980 && year <= DateTime.Now.Year)
+                string yearInput = promptYear();
+                if (int.TryParse(yearInput, out year) && validateYear(year))
                 {
                     break;
                 }
-                Console.WriteLine($"Invalid input. Car Year must be between 1980 and {DateTime.Now.Year}.");
+                displayInvalidYear();
             }
+            return year;
+        }
+        bool validateYear(int year)
+        {
+            return year > 1980 && year <= DateTime.Now.Year;
+        }
+        void displayInvalidYear()
+        {
+            Console.WriteLine($"Invalid input. Car Year must be between 1980 and {DateTime.Now.Year}.");
+        }
 
-            // Validate Car Mileage
-            int carMileage;
+        // car mileage input    
+        string promptMileage()
+        {
+            Console.Write("Enter Car Mileage (miles): ");
+            return Console.ReadLine();
+        }
+        int enterMileage()
+        {
+            int mileage;
             while (true)
             {
-                Console.Write("Enter Car Mileage (miles): ");
-                string mileageInput = Console.ReadLine();
-                if (int.TryParse(mileageInput, out carMileage) && carMileage >= 0)
+                string mileageInput = promptMileage();
+                if (int.TryParse(mileageInput, out mileage) && validateMileage(mileage))
                 {
                     break;
                 }
-                Console.WriteLine("Invalid input. Car Mileage must be a non-negative integer.");
+                displayInvalidMileage();
+                promptMileage(); // Prompt again if the input is invalid
             }
+            return mileage;
+        }
+        bool validateMileage(int mileage)
+        {
+            return mileage >= 0;
+        }
+        void displayInvalidMileage()
+        {
+            Console.WriteLine("Invalid input. Car Mileage must be a non-negative integer.");
+        }
 
-            // Car Availability
-            string availability = "Available";
+        // car photo input
+        void promptCarPhoto()
+        {
+            Console.Write("Upload Photo (jpg/png/jpeg/pdf) or type 'done' to finish: ");
+        }
+        string uploadPhoto()
+        {
+            return Console.ReadLine().Trim().ToLower();
+        }
+        bool validatePhoto(string photoFile)
+        {
+            return IsValidFileType(photoFile);
+        }
+        void displayInvalidPhoto()
+        {
+            Console.WriteLine("Invalid file type. Please upload a file with a valid extension (jpg, png, jpeg, pdf).");
+        }
+        List<string> updatePhotoList(List<string> photoFiles, string photoFile)
+        {
+            photoFiles.Add(photoFile);
+            return photoFiles;
+        }
+        void displayPhotoList(List<string> photoFiles)
+        {
+            Console.WriteLine("====Uploaded photos====");
+            foreach (var file in photoFiles)
+            {
+                Console.WriteLine(file);
+            }
+        }
 
-            // Validate photos
-            List<string> photoFiles = new List<string>();
+        // hourly charge input
+        string promptCharge()
+        {
+            Console.Write("Enter Hourly Charge ($): ");
+            return Console.ReadLine();
+        }
+        float enterCharge()
+        {
+            float charge;
+            while (true)
+            {
+                string chargeInput = promptCharge();
+                if (float.TryParse(chargeInput, NumberStyles.Float, CultureInfo.InvariantCulture, out charge) && validateCharge(charge))
+                {
+                    charge = (float)Math.Round(charge, 2); 
+                    break;
+                }
+                displayInvalidCharge();
+                promptCharge(); // Prompt again if the input is invalid
+            }
+            return charge;
+        }
+        bool validateCharge(float charge)
+        {
+            return charge >= 0;
+        }
+        void displayInvalidCharge()
+        {
+            Console.WriteLine("Invalid input. Please enter a valid number.");
+        }
 
+        // insurance company input 
+        void displayInsuranceCompany()
+        {
             Console.WriteLine();
-            Console.WriteLine("========Please upload images of the car!========");
+            Console.WriteLine("====Available Insurance Companies====");
+            foreach (var company in companyDictionary.Values)
+            {
+                Console.WriteLine($"Branch No: {company.BranchNo}, Company: {company.CompanyName}, Tel: {company.Telephone}, Address: {company.Address}, Email: {company.EmailAddress}");
+            }
+        }
+        string promptInsuranceCompany()
+        {
+            Console.Write("Enter the Branch Number of your Insurance Company: ");
+            return Console.ReadLine();
+        }
+        bool validateBranchNo(string branchInput, out int branchNo)
+        {
+            return int.TryParse(branchInput, out branchNo) && companyDictionary.ContainsKey(branchNo);
+        }
+        void displayInvalidBranchNo()
+        {
+            Console.WriteLine("Invalid Branch Number. Please enter a valid branch number from the list.");
+        }
+        int enterInsuranceCompany()
+        {
+            while (true)
+            {
+                string branchInput = promptInsuranceCompany();
+                if (validateBranchNo(branchInput, out int branchNo))
+                {
+                    return branchNo;
+                }
+                else
+                {
+                    displayInvalidBranchNo();
+                }
 
+                if (companyDictionary.TryGetValue(branchNo, out var company))
+                {
+                    selectedCompany = new InsuranceCompany
+                    {
+                        BranchNo = branchNo,
+                        CompanyName = company.CompanyName,
+                        Telephone = company.Telephone,
+                        Address = company.Address,
+                        EmailAddress = company.EmailAddress
+                    };
+                }
+                else
+                {
+                    Console.WriteLine("Invalid Branch Number. Please try again.");
+                }
+            }
+        }
+
+        // insurance details input
+        string promptExpiryDate()
+        {
+            Console.Write("Enter Insurance Expiry Date (YYYY-MM-DD): ");
+            return Console.ReadLine();
+        }
+        bool validateExpiryDate(string dateInput, out DateTime expiryDate)
+        {
+            return DateTime.TryParse(dateInput, out expiryDate) && expiryDate > DateTime.Now;
+        }
+        void displayInvalidDate()
+        {
+            Console.WriteLine("Invalid date. Please enter a future date.");
+        }
+        void enterInsuranceExpiryDate()
+        {
+            DateTime expiryDate;
+            while (true)
+            {
+                string dateInput = promptExpiryDate();
+                if (validateExpiryDate(dateInput, out expiryDate))
+                {
+                    break;
+                }
+                else
+                {
+                    displayInvalidDate();
+                }
+            }
+        }
+
+        // set availability 
+        string setAvailability()
+        {
+            string availability = "Available";
+            return availability;
+        }
+
+
+        // confirmation
+        void displaySummary(string licencePlate, string carMake, string carModel, int year, int mileage,string availability, int charge)
+        {
+            Console.WriteLine();
+            Console.WriteLine("========Car details summary========");
+            Console.WriteLine($"Car Plate Number: {licencePlate}");
+            Console.WriteLine($"Car Make: {carMake}");
+            Console.WriteLine($"Car Model: {carModel}");
+            Console.WriteLine($"Year: {year}");
+            Console.WriteLine($"Car Mileage: {mileage}");
+            Console.WriteLine($"Availability: {availability}");
+            Console.WriteLine($"Hourly Charge: ${charge:F2}");
+        }
+        string promptConfirmation()
+        {
+
+        }
+        void confirmRegistration()
+        {
+
+        }
+
+        bool createRegistration()
+        {
+            var newCar = new Car
+            {
+                CarOwnerId = carOwner.Id,
+                LicensePlate = licenceNo,
+                CarMake = carMake,
+                Model = carModel,
+                Year = year,
+                Mileage = carMileage,
+                Availability = availability,
+                Charge = charge,
+            };
+        }
+
+        void updateInsuranceList(Car newCar, int branchNo, DateTime expiryDate)
+        {
+            var newInsurance = new Insurance
+            {
+                ExpiryDate = expiryDate,
+                Car = newCar,
+                Company = selectedCompany
+            };
+            insuranceList.Add(newInsurance);
+            AppendInsuranceToCSV("Insurance_List.csv", newInsurance);
+        }
+
+        void displayRegisteredCar()
+        {
+            Console.WriteLine("====Car Successfully Registered!====");
+        }
+
+        void displayRegistrationCancelled()
+        {
+            Console.WriteLine("====Car registration canceled.====");
+        }
+
+
+        void selectRegisterCar()
+        {
+            Console.WriteLine("========Please enter car details========");
+            enterLicencePlate();
+            enterCarMake();
+            enterCarModel();
+            enterYear();
+            enterMileage();
+
+            // upload photo
+            List<string> photoFiles = new List<string>();
             string photoFile;
+            Console.WriteLine("========Please upload images of the car!========");
             while (true)
             {
                 if (photoFiles.Count >= 5)
@@ -537,141 +830,37 @@ if (user != null)
                     Console.WriteLine("You have reached the maximum number of photo uploads (5).");
                     break;
                 }
-
-                Console.Write("Upload Photo (jpg/png/jpeg/pdf) or type 'done' to finish: ");
-                photoFile = Console.ReadLine().Trim().ToLower();
-
+                promptCarPhoto();
+                photoFile = uploadPhoto();
                 if (photoFile == "done")
                 {
                     break;
                 }
-
-                if (IsValidFileType(photoFile))
+                if (validatePhoto(photoFile))
                 {
-                    photoFiles.Add(photoFile);
-                    Console.WriteLine($"Photo '{photoFile}' uploaded successfully.");
-                }
+                    updatePhotoList(photoFiles, photoFile);
+                }  
                 else
                 {
                     Console.WriteLine("Invalid file type. Please upload a file with a valid extension (jpg, png, jpeg, pdf).");
                 }
             }
+            displayPhotoList(photoFiles);
 
-            // Process the uploaded photos
-            Console.WriteLine();
-            Console.WriteLine("====Uploaded photos====");
-            foreach (var file in photoFiles)
-            {
-                Console.WriteLine(file);
-            }
 
-            // Set Car Owner Charge (per hour)
-            Console.WriteLine();
-            Console.WriteLine("====Set Hourly Charge ($)====");
-            float charge;
-            while (true)
-            {
-                Console.Write("Enter Hourly Charge ($): ");
-                string Charge = Console.ReadLine();
+            // set charge
+            enterCharge();
 
-                if (float.TryParse(Charge, NumberStyles.Float, CultureInfo.InvariantCulture, out charge) && charge >= 0)
-                {
-                    // Round the charge to 2 decimal places
-                    charge = (float)Math.Round(charge, 2);
+            // insurance details
+            displayInsuranceCompany();
+            enterInsuranceCompany();
+            enterInsuranceExpiryDate();
 
-                    // Ensure the charge has 2 decimal places for display
-                    Console.WriteLine($"Hourly Charge Set: ${charge:F2}");
-                    break;
-                }
-                else
-                {
-                    Console.WriteLine("Invalid input. Please enter a valid number.");
-                }
-            }
+            // set availability
+            setAvailability();
 
-            // Check if car plate number exists in the insuranceList
-            string insuranceStatus = insuranceList.Any(i => i.Car.LicensePlate == carPlateNo) ? "Y" : "X";
+            // comfirm registration
 
-            Console.WriteLine();
-            Console.WriteLine("========Car details summary========");
-            Console.WriteLine($"Car Plate Number: {carPlateNo}");
-            Console.WriteLine($"Car Make: {carMake}");
-            Console.WriteLine($"Car Model: {carModel}");
-            Console.WriteLine($"Year: {year}");
-            Console.WriteLine($"Car Mileage: {carMileage}");
-            Console.WriteLine($"Availability: {availability}");
-            Console.WriteLine($"Hourly Charge: ${charge:F2}");
-            if (insuranceStatus == "Y")
-            {
-                Console.WriteLine($"Insurance Status: {insuranceStatus}");
-                var insurance = insuranceList.FirstOrDefault(i => i.Car.LicensePlate == carPlateNo);
-                if (insurance != null)
-                {
-                    Console.WriteLine();
-                    Console.WriteLine("====Insurance Company Details====");
-                    Console.WriteLine($"Insurance Company: {insurance.Company.CompanyName}");
-                    Console.WriteLine($"Branch Number: {insurance.Company.BranchNo}");
-                    Console.WriteLine($"Expiry Date: {insurance.ExpiryDate.ToShortDateString()}");
-                }
-                else
-                {
-                    Console.WriteLine();
-                    Console.WriteLine("====Insurance Company Details====");
-                    Console.WriteLine("No insurance details found for this car plate number.");
-                }
-            }
-            else
-            {
-                Console.WriteLine($"Insurance Status: {insuranceStatus}");
-                Console.WriteLine();
-                Console.WriteLine("====Insurance Company Details====");
-                Console.WriteLine("No insurance details found for this car plate number.");
-            }
-
-            Console.WriteLine();
-            Console.WriteLine("====Uploaded photos:====");
-            foreach (var file in photoFiles)
-            {
-                Console.WriteLine(file);
-            }
-
-            // comfirmation for car registration
-            while (true)
-            {
-                Console.WriteLine();
-                Console.Write("Are you sure you want to register this car? (yes/no) ");
-                string response = Console.ReadLine().Trim().ToLower();
-
-                if (response == "yes")
-                {
-                    var newCar = new Car
-                    {
-                        CarOwnerId = carOwner.Id,
-                        LicensePlate = carPlateNo,
-                        CarMake = carMake,
-                        Model = carModel,
-                        Year = year,
-                        Mileage = carMileage,
-                        Availability = availability,
-                        InsuranceStatus = insuranceStatus,
-                        Charge = charge,
-                    };
-                    cars.Add(newCar);
-                    AppendCarToCSV("Car_List.csv", newCar);
-                    AppendPhotosToCSV("Photo_List.csv", carPlateNo, photoFiles);
-                    Console.WriteLine("====Car Successfully Registered!====");
-                    break;
-                }
-                else if (response == "no")
-                {
-                    Console.WriteLine("====Car registration canceled.====");
-                    break;
-                }
-                else
-                {
-                    Console.WriteLine("Invalid input. Please type 'yes' or 'no'.");
-                }
-            }
         }
     }
     else if (user is Renter renter)
@@ -1409,9 +1598,9 @@ if (user != null)
                     {
                         redoBooking = false;
 
-                        Booking newBooking = Booking.CreateBooking(startTime, endTime, status, pickUpMethod, returnMethod, totalCharge, totalDeliveryFee, selectedCar);
+                        string status = "Pending";
 
-                        renter.Bookings.Add(booking);
+                        Booking newBooking = Booking.CreateBooking(startTime, endTime, status, pickUpMethod, returnMethod, totalCharge, totalDeliveryFee, selectedCar, renter);
 
                         displayBookingConfirm();
                         MakePayment();
@@ -1457,66 +1646,133 @@ if (user != null)
         void MakePayment()
         {
             Booking booking = getUnpaidBooking();
-            if (booking != null)
+            if (booking == null)
             {
-                string status = getBookingStatus(booking);
+                displayNoUnpaidBooking();
+                return;
+            }
 
-                displayBooking(booking);
-                string name = user.FullName;
+            string status = getBookingStatus(booking);
 
-                promptProceedPayment();
+            double totalFee = 0;
+            if (status == "Pending")
+            {
+                double bookingFee = booking.getBookingFee();
+                double deliveryFee = booking.getDeliveryFee();
+                totalFee = bookingFee + deliveryFee;
+            }
+            else if (status == "Completed" || status == "Picked Up")
+            {
+                double penaltyFee = booking.getPenaltyFee();
+                double damageFee = booking.getDamageFee();
+                totalFee = penaltyFee + damageFee;
+            }
 
-                string res = proceedPayment(); 
+            displayBooking(booking);
+            promptProceedPayment();
 
-                if (res != "yes")
-                {
-                    Console.WriteLine("Payment Cancelled.");
-                    return;
-                }
+            string res = proceedPayment();
+            if (res != "yes")
+            {
+                Console.WriteLine("Payment Cancelled.");
+                return;
+            }
 
-                Console.WriteLine("Proceed with payment");
-                Console.WriteLine();
-
+            string paymentStatus;
+            do
+            {
                 promptPaymentMethod();
 
-                string method = choosePaymentMethod();
+                PaymentMethod selectedPaymentMethod = null;
+                double accBalance = 0;
 
-                (PaymentMethod selectedPaymentMethod, double accBalance) = validatePaymentMethod();
-
-                if (status == "Pending")
+                while (selectedPaymentMethod == null)
                 {
-                    while (accBalance < booking.Payment.TotalFee + booking.Payment.AdditionalCharge.DeliveryFee)
+                    string choice = choosePaymentMethod();
+
+                    // validate method input
+                    while (choice != "DIGITAL WALLET" && choice != "DEBIT CARD" && choice != "CREDIT CARD")
                     {
-                        Console.WriteLine("Balance insufficient! Please choose another payment method!");
-                        (selectedPaymentMethod, accBalance) = validatePaymentMethod();
+                        Console.WriteLine("Invalid input! Please try again.");
+                        Console.WriteLine("1. Digital Wallet");
+                        Console.WriteLine("2. Debit Card");
+                        Console.WriteLine("3. Credit Card");
+                        Console.Write("Select Payment Method: ");
+                        choice = choosePaymentMethod();
                     }
 
-                    selectedPaymentMethod.DeductBalance(booking.Payment.TotalFee);
-
-                    status = "Confirmed";
-                    booking.updateBookingStatus(status);
-                }
-                else if (status == "Picked Up" || booking.Status == "Completed")
-                {
-                    while (accBalance < booking.Payment.AdditionalCharge.PenaltyFee + booking.Payment.AdditionalCharge.DamageFee)
+                    switch (choice)
                     {
-                        Console.WriteLine("Balance insufficient! Please choose another payment method!");
-                        (selectedPaymentMethod, accBalance) = validatePaymentMethod();
-                    }
-                    double additionalCharge = booking.Payment.AdditionalCharge.PenaltyFee + booking.Payment.AdditionalCharge.DamageFee;
+                        case "DIGITAL WALLET":
+                            selectedPaymentMethod = validateDigitalWalletInfo();
+                            break;
 
-                    selectedPaymentMethod.DeductBalance(additionalCharge);
-                    booking.Status = "All Expenses Paid For";
+                        case "DEBIT CARD":
+                            selectedPaymentMethod = validateDebitCardInfo();
+                            break;
+
+                        case "CREDIT CARD":
+                            selectedPaymentMethod = validateCreditCardInfo();
+                            break;
+                    }
+
+                    if (selectedPaymentMethod is DigitalWallet digitalWallet)
+                    {
+                        accBalance = digitalWallet.getDigitalWalletBalance();
+                    }
+                    else if (selectedPaymentMethod is DebitCard debitCard)
+                    {
+                        accBalance = debitCard.getAccountBalance();
+                    }
+                    else if (selectedPaymentMethod is CreditCard creditCard)
+                    {
+                        accBalance = creditCard.getCreditLimit();
+                    }
+
                 }
 
-                sendReceipt((Renter)user);
-            }
-            else
+                if (accBalance < totalFee)
+                {
+                    displayInsufficientFunds();
+                    paymentStatus = "failure";
+                }
+                else
+                {
+                    selectedPaymentMethod.DeductBalance(totalFee);
+                    paymentStatus = "success";
+
+                    if (status == "Pending")
+                    {
+                        booking.updateBookingStatus("Confirmed");
+                    }
+                    else if (status == "Completed")
+                    {
+                        booking.Status = "All Expenses Paid For";
+                    }
+                }
+            } while (paymentStatus == "failure");
+
+            string receipt = GenerateReceipt(renter);
+
+            promptReceiptDeliveryMethod();
+
+            string method = enterReceiptDeliveryMethod();
+
+            while (method != "EMAIL" && method != "PHONE NUMBER")
             {
-                Console.WriteLine("No ongoing bookings that require payment");
-                
+                Console.WriteLine("Invalid option! Please select another option!");
+                promptReceiptDeliveryMethod();
+                method = enterReceiptDeliveryMethod();
             }
-            
+
+            if (method == "EMAIL")
+            {
+                sendEmailReceipt(renter);
+            }
+            else if (method == "PHONE NUMBER")
+            {
+                sendSMSReceipt(renter);
+            }
         }
 
         string getBookingStatus(Booking booking)
@@ -1782,9 +2038,19 @@ void displayUserDetails(User user)
     }
     else if (user.GetRole() == "Car Owner")
     {
-        Car_Owner carOwner = ((Car_Owner)user);
+        CarOwner carOwner = ((CarOwner)user);
         Console.WriteLine($"Licence: {carOwner.License}");
     }
+}
+
+void displayInsufficientFunds()
+{
+    Console.WriteLine("Balance insufficient! Please choose another payment method!");
+}
+
+void displayNoUnpaidBooking()
+{
+    Console.WriteLine("No ongoing booking or outstanding fees!");
 }
 
 void promptPaymentMethod()
@@ -1801,182 +2067,151 @@ void promptPaymentMethod()
 string choosePaymentMethod()
 {
     string method = Console.ReadLine();
-    return method;
+    return method.ToUpper();
 }
 
-// validate payment method exists
-(PaymentMethod, double) validatePaymentMethod()
+DigitalWallet validateDigitalWalletInfo()
 {
-    PaymentMethod selectedPaymentMethod = null;
+    Console.Write("Enter wallet type: ");
+    string walletType = Console.ReadLine().ToUpper();
+    var digitalWallet = paymentMethods
+        .OfType<DigitalWallet>()
+        .FirstOrDefault(dw => dw.Type.ToUpper() == walletType);
 
-    while (selectedPaymentMethod == null)
+    if (digitalWallet == null)
     {
-        Console.WriteLine("Proceed with payment");
-        Console.WriteLine();
-
-        promptPaymentMethod();
-
-        string method = choosePaymentMethod();
-
-        while (method != "1" && method != "2" && method != "3")
-        {
-            Console.WriteLine("Invalid input! Please try again.");
-
-            Console.WriteLine();
-
-            Console.WriteLine("1. Digital Wallet");
-            Console.WriteLine("2. Debit Card");
-            Console.WriteLine("3. Credit Card");
-            Console.Write("Select Payment Method: ");
-
-            method = Console.ReadLine();
-
-            if (method != "Digital Wallet" && method != "Debit Card" && method != "Credit Card")
-            {
-                Console.WriteLine("Invalid input! Please try again.");
-            }
-        }
-
-        if (method == "Digital Wallet")
-        {
-            Console.WriteLine();
-            Console.Write("Enter wallet type: ");
-            string walletType = Console.ReadLine().ToUpper();
-            selectedPaymentMethod = paymentMethods
-                .OfType<DigitalWallet>()
-                .FirstOrDefault(dw => dw.Type.ToUpper() == walletType);
-
-            if (selectedPaymentMethod == null)
-            {
-                Console.WriteLine("No matching Digital Wallet found. Please try again.");
-                continue;
-            }
-
-            var digitalWallet = (DigitalWallet)selectedPaymentMethod;
-            string cardName;
-            do
-            {
-                Console.WriteLine();
-                Console.Write("Enter card name: ");
-                cardName = Console.ReadLine();
-                if (digitalWallet.Name != cardName)
-                {
-                    Console.WriteLine("Card name does not match user's name. Please try again.");
-                    selectedPaymentMethod = null;
-                    continue;
-                }
-            } while (cardName != digitalWallet.Name);
-
-            return (digitalWallet, digitalWallet.Balance);
-        }
-        else if (method == "Debit Card")
-        {
-            string cardNum;
-            do
-            {
-                Console.WriteLine();
-                Console.Write("Enter card number: ");
-                cardNum = Console.ReadLine();
-                if (cardNum.Length != 16)
-                {
-                    Console.WriteLine("Invalid card number! It must be 16 digits.");
-                }
-            } while (cardNum.Length != 16);
-
-            selectedPaymentMethod = paymentMethods
-                .OfType<DebitCard>()
-                .FirstOrDefault(dc => dc.CardNum == cardNum);
-
-            if (selectedPaymentMethod == null)
-            {
-                Console.WriteLine("No matching Debit Card found. Please try again.");
-                continue;
-            }
-
-            var debitCard = (DebitCard)selectedPaymentMethod;
-            string cardName;
-            do
-            {
-                Console.WriteLine("Enter card name: ");
-                cardName = Console.ReadLine();
-                if (debitCard.CardName != cardName)
-                {
-                    Console.WriteLine("Card name does not match user's name. Please try again.");
-                    selectedPaymentMethod = null;
-                    continue;
-                }
-            } while (cardName != debitCard.CardName);
-
-            return (debitCard, debitCard.Balance);
-        }
-        else if (method == "Credit Card")
-        {
-            string cardNum;
-            do
-            {
-                Console.WriteLine("Enter card number: ");
-                cardNum = Console.ReadLine();
-                if (cardNum.Length != 16 || !long.TryParse(cardNum, out _))
-                {
-                    Console.WriteLine("Invalid card number! It must be 16 digits.");
-                }
-            } while (cardNum.Length != 16 || !long.TryParse(cardNum, out _));
-
-            selectedPaymentMethod = paymentMethods
-                .OfType<CreditCard>()
-                .FirstOrDefault(cc => cc.CardNum == cardNum);
-
-            if (selectedPaymentMethod == null)
-            {
-                Console.WriteLine("No matching Credit Card found. Please try again.");
-                continue;
-            }
-
-            var creditCard = (CreditCard)selectedPaymentMethod;
-            string cardName;
-            do
-            {
-                Console.WriteLine("Enter card name: ");
-                cardName = Console.ReadLine();
-
-                if (creditCard.CardName != cardName)
-                {
-                    Console.WriteLine("Card name does not match user's name. Please try again.");
-                    selectedPaymentMethod = null;
-                    continue;
-                }
-            } while (cardName != creditCard.CardName);
-            return (creditCard, creditCard.Balance);
-        }
+        return null;
     }
 
-    return (null, 0);
+    string cardName;
+    do
+    {
+        Console.Write("Enter card name: ");
+        cardName = Console.ReadLine();
+        if (digitalWallet.Name != cardName)
+        {
+            Console.WriteLine("Card name does not match user's name. Please try again.");
+        }
+    } while (digitalWallet.Name != cardName);
+
+    return digitalWallet;
 }
 
-// send receipt method
-void sendReceipt(Renter user)
+DebitCard validateDebitCardInfo()
+{
+    string cardNum;
+    do
+    {
+        Console.Write("Enter card number: ");
+        cardNum = Console.ReadLine();
+        if (cardNum.Length != 16)
+        {
+            Console.WriteLine("Invalid card number! It must be 16 digits.");
+        }
+    } while (cardNum.Length != 16);
+
+    var debitCard = paymentMethods
+        .OfType<DebitCard>()
+        .FirstOrDefault(dc => dc.CardNum == cardNum);
+
+    if (debitCard == null)
+    {
+        return null;
+    }
+
+    string cardName;
+    do
+    {
+        Console.Write("Enter card name: ");
+        cardName = Console.ReadLine();
+        if (debitCard.CardName != cardName)
+        {
+            Console.WriteLine("Card name does not match user's name. Please try again.");
+        }
+    } while (debitCard.CardName != cardName);
+
+    return debitCard;
+}
+
+CreditCard validateCreditCardInfo()
+{
+    string cardNum;
+    do
+    {
+        Console.Write("Enter card number: ");
+        cardNum = Console.ReadLine();
+        if (cardNum.Length != 16 || !long.TryParse(cardNum, out _))
+        {
+            Console.WriteLine("Invalid card number! It must be 16 digits.");
+        }
+    } while (cardNum.Length != 16 || !long.TryParse(cardNum, out _));
+
+    var creditCard = paymentMethods
+        .OfType<CreditCard>()
+        .FirstOrDefault(cc => cc.CardNum == cardNum);
+
+    if (creditCard == null)
+    {
+        return null;
+    }
+
+    string cardName;
+    do
+    {
+        Console.Write("Enter card name: ");
+        cardName = Console.ReadLine();
+        if (creditCard.CardName != cardName)
+        {
+            Console.WriteLine("Card name does not match user's name. Please try again.");
+        }
+    } while (creditCard.CardName != cardName);
+
+    return creditCard;
+}
+
+void promptReceiptDeliveryMethod()
 {
     Console.WriteLine("How would you like receipt to be sent?");
     Console.WriteLine("1. Email");
     Console.WriteLine("2. Phone number");
+}
+
+string enterReceiptDeliveryMethod()
+{
+    Console.Write("Enter delivery method: ");
     string res = Console.ReadLine();
+    Console.WriteLine();
 
-    while (res != "1" && res != "2")
-    {
-        Console.WriteLine("Invalid option! Please select another option!");
-        Console.WriteLine("How would you like receipt to be sent?");
-        Console.WriteLine("1. Email");
-        Console.WriteLine("2. Phone number");
-        res = Console.ReadLine();
-    }
+    return res.ToUpper();
+}
 
-    if (res == "1")
+string GenerateReceipt(Renter user)
+{
+    Console.WriteLine("Receipt generated for user: " + user.Email);
+    return "Receipt generated"; 
+}
+
+void sendEmailReceipt(Renter user)
+{
+    Console.WriteLine("Receipt sent via email to " + user.Email);
+    DisplayReceiptConfirmation(true);
+}
+
+void sendSMSReceipt(Renter user)
+{
+    Console.WriteLine("Receipt sent via SMS to " + user.ContactNum);
+    DisplayReceiptConfirmation(true);
+}
+
+void DisplayReceiptConfirmation(bool success)
+{
+    if (success)
     {
-        Console.WriteLine("Receipt sent via email to " + user.Email);
+        Console.WriteLine("Receipt delivery confirmed.");
     }
     else
     {
-        Console.WriteLine("Receipt sent via SMS to " + user.ContactNum);
+        Console.WriteLine("Invalid receipt delivery method.");
     }
 }
 

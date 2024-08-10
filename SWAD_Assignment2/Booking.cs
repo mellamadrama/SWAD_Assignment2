@@ -101,7 +101,28 @@ namespace SWAD_Assignment2
             car.Availability = availability;
         }
 
-        public static Booking CreateBooking(DateTime startTime, DateTime endTime, string status, PickUpMethod pickUpMethod, ReturnMethod returnMethod, double totalCharge, double totalDeliveryFee, Car selectedCar)
+        public double getBookingFee()
+        {
+            return payment.TotalFee;
+        }
+
+        public double getDeliveryFee()
+        {
+            return payment.AdditionalCharge.DeliveryFee;
+        }
+
+        public double getPenaltyFee()
+        {
+            return payment.AdditionalCharge.PenaltyFee;
+        }
+
+        public double getDamageFee()
+        {
+            return payment.AdditionalCharge.DamageFee;
+        }
+
+
+        public static Booking CreateBooking(DateTime startTime, DateTime endTime, string status, PickUpMethod pickUpMethod, ReturnMethod returnMethod, double totalCharge, double totalDeliveryFee, Car selectedCar, Renter renter)
         {
             AdditionalCharge additionalCharge = new AdditionalCharge(0, 0, totalDeliveryFee);
             Booking booking = new Booking
@@ -115,6 +136,9 @@ namespace SWAD_Assignment2
                 Payment = new Payment(DateTime.Now, totalCharge, additionalCharge),
                 Car = selectedCar
             };
+
+            renter.AddBooking(booking);
+
             return booking;
         }
     }

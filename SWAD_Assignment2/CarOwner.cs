@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace SWAD_Assignment2
 {
-    internal class Car_Owner : User
+    internal class CarOwner : User
     {
         private int license;
         private List<Car> cars;
@@ -21,8 +21,8 @@ namespace SWAD_Assignment2
             get { return cars; }
             set { cars = value; }
         }
-        public Car_Owner() { }
-        public Car_Owner(int id, string fullName, int contactNum, string email, int password, DateTime dateOfBirth, int license, List<Car> cars)
+        public CarOwner() { }
+        public CarOwner(int id, string fullName, int contactNum, string email, int password, DateTime dateOfBirth, int license, List<Car> cars)
             : base(id, fullName, contactNum, email, password, dateOfBirth)
         {
             this.license = license;

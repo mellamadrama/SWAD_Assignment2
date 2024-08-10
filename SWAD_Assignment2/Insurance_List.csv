@@ -1,4 +1,4 @@
-BranchNo,CarPlateNo,CarOwnerId,ExpiryDate
+BranchNo,LicencePlate,CarOwnerId,ExpiryDate
 1,GR8DAYZ,11234,2029-12-31
 1,EZ4ME2,12345,2025-01-15
 1,CHILLX,13456,2028-11-30

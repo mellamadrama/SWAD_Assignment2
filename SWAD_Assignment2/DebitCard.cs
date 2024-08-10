@@ -22,11 +22,16 @@ namespace SWAD_Assignment2
             Balance = balance;
             Bank = bank;
         }
+
+        public double getAccountBalance()
+        {
+            return Balance;
+        }
+
         public override void DeductBalance(double amount)
         {
             Balance -= amount;
             Console.WriteLine("Payment Successful!");
-            Console.WriteLine($"New Account Balance: {(Balance):C}");
         }
     }
 }

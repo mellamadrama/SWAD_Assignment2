@@ -9,13 +9,12 @@ namespace SWAD_Assignment2
     internal class Car
     {
         private int carOwnerId;
-        private string carPlateNo;
+        private string licencePlate;
         private string carMake;
         private string model;
         private int year;
         private int mileage;
         private string availability;
-        private string insuranceStatus;
         private float charge;
         private Insurance insurance;
         private List<Booking> bookings;
@@ -29,8 +28,8 @@ namespace SWAD_Assignment2
         }
         public string LicensePlate
         {
-            get { return carPlateNo; }
-            set { carPlateNo = value; }
+            get { return licencePlate; }
+            set { licencePlate = value; }
         }
         public string CarMake
         {
@@ -56,11 +55,6 @@ namespace SWAD_Assignment2
         {
             get { return availability; }
             set { availability = value; }
-        }
-        public string InsuranceStatus
-        {
-            get { return insuranceStatus; }
-            set { insuranceStatus = value; }
         }
         public float Charge
         {
@@ -95,16 +89,15 @@ namespace SWAD_Assignment2
             set { photoList = value; }
         }
         public Car() { }
-        public Car(int carOwnerId, string carPlateNo, string carMake, string model, int year, int mileage, string availability, string insuranceStatus, float charge,Insurance insurance, List<Booking> bookings, List<string> photoList)
+        public Car(int carOwnerId, string licencePlate, string carMake, string model, int year, int mileage, string availability, float charge,Insurance insurance, List<Booking> bookings, List<string> photoList)
         {
             this.carOwnerId = carOwnerId;
-            this.carPlateNo = carPlateNo;
+            this.licencePlate = licencePlate;
             this.carMake = carMake;
             this.model = model;
             this.year = year;
             this.mileage = mileage;
             this.availability = availability;
-            this.insuranceStatus = insuranceStatus;
             this.charge = charge;
             this.insurance=insurance;
             this.bookings=bookings;

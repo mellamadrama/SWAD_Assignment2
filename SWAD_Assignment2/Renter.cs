@@ -43,5 +43,15 @@ namespace SWAD_Assignment2
             this.bookings=bookings;
         }
         public override string GetRole() => "Renter";
+
+        public void AddBooking(Booking booking)
+        {
+            if (booking == null)
+            {
+                throw new ArgumentNullException(nameof(booking), "Booking cannot be null");
+            }
+
+            bookings.Add(booking);
+        }
     }
 }

@@ -10,7 +10,7 @@ namespace SWAD_Assignment2
     {
         private DateTime expiryDate;
         private Car car;
-        private Insurance_Company company;
+        private InsuranceCompany company;
 
         public DateTime ExpiryDate
         {
@@ -22,13 +22,13 @@ namespace SWAD_Assignment2
             get { return car; }
             set { car = value; }
         }
-        public Insurance_Company Company
+        public InsuranceCompany Company
         {
             get { return company; }
             set { company = value; }
         }
         public Insurance() { }
-        public Insurance(DateTime expiryDate, Car car, Insurance_Company company)
+        public Insurance(DateTime expiryDate, Car car, InsuranceCompany company)
         {
             this.expiryDate = expiryDate; 
             this.car = car;
