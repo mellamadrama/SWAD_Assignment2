@@ -379,6 +379,7 @@ if (user != null)
                     break;
             }
         }
+        // RENA (S10258053C)
         void ViewCars(List<Car> cars, CarOwner carOwner)
         {
             var ownerCars = cars.Where(c => c.CarOwnerId == carOwner.Id).ToList();
@@ -403,6 +404,7 @@ if (user != null)
                 writer.WriteLine(line);
             }
         }
+        // RENA (S10258053C)
         void AppendPhotosToCSV(string photoCsvFilePath, string LicensePlate, List<string> photoFiles)
         {
             const int MaxPhotos = 5;
@@ -424,6 +426,7 @@ if (user != null)
                 writer.WriteLine($"{LicensePlate},{photoList}");
             }
         }
+        // RENA (S10258053C)
         // licence plate input
         string enterLicencePlate()
         {
@@ -474,6 +477,7 @@ if (user != null)
             Console.WriteLine("Invalid input.Licence Plate cannot be empty.");
         }
 
+        // RENA (S10258053C)
         // car make input
         string enterCarMake()
         {
@@ -504,6 +508,7 @@ if (user != null)
             Console.WriteLine("Invalid input. Car Make cannot be empty or must be a valid car make.");
         }
 
+        // RENA (S10258053C)
         // car model input
         string enterCarModel()
         {
@@ -534,7 +539,7 @@ if (user != null)
             Console.WriteLine("Invalid input. Car Model cannot be empty.");
         }
 
-
+        // RENA (S10258053C)
         // car year input
         string promptYear()
         {
@@ -564,6 +569,7 @@ if (user != null)
             Console.WriteLine($"Invalid input. Car Year must be between 1980 and {DateTime.Now.Year}.");
         }
 
+        // RENA (S10258053C)
         // car mileage input    
         string promptMileage()
         {
@@ -594,6 +600,7 @@ if (user != null)
             Console.WriteLine("Invalid input. Car Mileage must be a non-negative integer.");
         }
 
+        // RENA (S10258053C)
         // car photo input
         void promptCarPhoto()
         {
@@ -625,6 +632,7 @@ if (user != null)
             }
         }
 
+        // RENA (S10258053C)
         // hourly charge input
         string promptCharge()
         {
@@ -656,6 +664,7 @@ if (user != null)
             Console.WriteLine("Invalid input. Please enter a valid number.");
         }
 
+        // RENA (S10258053C)
         // insurance company input 
         void displayInsuranceCompany()
         {
@@ -711,6 +720,7 @@ if (user != null)
             }
         }
 
+        // RENA (S10258053C)
         // insurance details input
         string promptExpiryDate()
         {
@@ -742,6 +752,7 @@ if (user != null)
             }
         }
 
+        // RENA (S10258053C)
         // set availability 
         string setAvailability()
         {
@@ -749,6 +760,7 @@ if (user != null)
             return availability;
         }
 
+        // RENA (S10258053C)
         // confirmation
         void displaySummary(string licencePlate, string carMake, string carModel, int year, int mileage,string availability, float charge)
         {
@@ -779,15 +791,20 @@ if (user != null)
                     displayRegisteredCar();
                     break;
                 }
-                else
+                else if (response == "no")
                 {
                     displayRegistrationCancelled();
                     break;
+                }
+                else
+                {
+                    Console.WriteLine("Invalid input. Please enter 'yes' or 'no'");
                 }
             }
 
         }
 
+        // RENA (S10258053C)
         void createRegistration(string licencePlate, string carMake, string carModel, int year, int mileage, string availability, float charge, DateTime expiryDate, List<string> photoFiles, int branchNo)
         {
             var newCar = new Car
