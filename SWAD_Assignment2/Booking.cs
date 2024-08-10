@@ -101,6 +101,21 @@ namespace SWAD_Assignment2
             car.Availability = availability;
         }
 
-
+        public static Booking CreateBooking(DateTime startTime, DateTime endTime, string status, PickUpMethod pickUpMethod, ReturnMethod returnMethod, double totalCharge, double totalDeliveryFee, Car selectedCar)
+        {
+            AdditionalCharge additionalCharge = new AdditionalCharge(0, 0, totalDeliveryFee);
+            Booking booking = new Booking
+            {
+                BookingId = Guid.NewGuid().ToString(),
+                StartDate = startTime,
+                EndDate = endTime,
+                Status = status,
+                PickUpMethod = pickUpMethod,
+                ReturnMethod = returnMethod,
+                Payment = new Payment(DateTime.Now, totalCharge, additionalCharge),
+                Car = selectedCar
+            };
+            return booking;
+        }
     }
 }

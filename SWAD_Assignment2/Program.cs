@@ -1005,7 +1005,7 @@ if (user != null)
             Console.WriteLine();
         }
 
-        void displayBookingTimeValid()
+        void displayBookingValidMessage()
         {
             Console.WriteLine();
             Console.WriteLine("Booking date is valid.");
@@ -1256,7 +1256,7 @@ if (user != null)
 
                     if (IsBookingTimeValid(startDateTime, endDateTime, selectedCar))
                     {
-                        displayBookingTimeValid();
+                        displayBookingValidMessage();
                         break;
                     }
                     else
@@ -1409,18 +1409,7 @@ if (user != null)
                     {
                         redoBooking = false;
 
-                        AdditionalCharge additionalCharge = new AdditionalCharge(0, 0, totalDeliveryFee);
-                        Booking booking = new Booking
-                        {
-                            BookingId = Guid.NewGuid().ToString(),
-                            StartDate = startTime,
-                            EndDate = endTime,
-                            Status = "Pending",
-                            PickUpMethod = pickUpMethod,
-                            ReturnMethod = returnMethod,
-                            Payment = new Payment(DateTime.Now, totalCharge, additionalCharge),
-                            Car = selectedCar
-                        };
+                        Booking newBooking = Booking.CreateBooking(startTime, endTime, status, pickUpMethod, returnMethod, totalCharge, totalDeliveryFee, selectedCar);
 
                         renter.Bookings.Add(booking);
 
