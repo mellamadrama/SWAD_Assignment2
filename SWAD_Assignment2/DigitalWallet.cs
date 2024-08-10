@@ -21,11 +21,13 @@ namespace SWAD_Assignment2
             Balance = balance;
         }
 
+        // Sudarsanam Rithika (S10257149F)
         public double getDigitalWalletBalance()
         {
             return Balance;
         }
 
+        // Sudarsanam Rithika (S10257149F)
         public override void DeductBalance(double amount)
         {
             Balance -= amount;

@@ -105,6 +105,11 @@ namespace SWAD_Assignment2
             this.unavailableDates = new List<string>();
             this.photoList = photoList;
         }
+        // Isabelle Tan S10257093F
+        public void setAvailability(string avail)
+        {
+            availability = avail;
+        }
         public List<string> getAvailableDates()
         {
             return availableDates.Except(unavailableDates).ToList();

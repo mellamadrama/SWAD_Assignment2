@@ -23,11 +23,13 @@ namespace SWAD_Assignment2
             Bank = bank;
         }
 
+        // Sudarsanam Rithika (S10257149F)
         public double getAccountBalance()
         {
             return Balance;
         }
 
+        // Sudarsanam Rithika (S10257149F)
         public override void DeductBalance(double amount)
         {
             Balance -= amount;

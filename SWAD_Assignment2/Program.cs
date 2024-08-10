@@ -268,7 +268,7 @@ var cars = LoadCarsFromCSV(carCsvFilePath, dates, insuranceList, photoList);
 var locations = ReadLocationsFromCsv(locationsCsvFilePath);
 
 User user = null;
-InsuranceCompany selectedCompany;
+InsuranceCompany selectedCompany = null;
 int emailAttempts = 0;
 bool emailValid = false;
 string email = string.Empty;
@@ -403,7 +403,7 @@ if (user != null)
                 writer.WriteLine(line);
             }
         }
-        void AppendPhotosToCSV(string photoCsvFilePath, string carPlateNo, List<string> photoFiles)
+        void AppendPhotosToCSV(string photoCsvFilePath, string LicensePlate, List<string> photoFiles)
         {
             const int MaxPhotos = 5;
             var p = new List<string>(photoFiles);
@@ -421,10 +421,9 @@ if (user != null)
 
             using (var writer = new StreamWriter(photoCsvFilePath, true))
             {
-                writer.WriteLine($"{carPlateNo},{photoList}");
+                writer.WriteLine($"{LicensePlate},{photoList}");
             }
         }
-
         // licence plate input
         string enterLicencePlate()
         {
@@ -534,6 +533,7 @@ if (user != null)
         {
             Console.WriteLine("Invalid input. Car Model cannot be empty.");
         }
+
 
         // car year input
         string promptYear()
@@ -725,7 +725,7 @@ if (user != null)
         {
             Console.WriteLine("Invalid date. Please enter a future date.");
         }
-        void enterInsuranceExpiryDate()
+        DateTime enterInsuranceExpiryDate()
         {
             DateTime expiryDate;
             while (true)
@@ -733,7 +733,7 @@ if (user != null)
                 string dateInput = promptExpiryDate();
                 if (validateExpiryDate(dateInput, out expiryDate))
                 {
-                    break;
+                    return expiryDate;
                 }
                 else
                 {
@@ -749,9 +749,8 @@ if (user != null)
             return availability;
         }
 
-
         // confirmation
-        void displaySummary(string licencePlate, string carMake, string carModel, int year, int mileage,string availability, int charge)
+        void displaySummary(string licencePlate, string carMake, string carModel, int year, int mileage,string availability, float charge)
         {
             Console.WriteLine();
             Console.WriteLine("========Car details summary========");
@@ -765,26 +764,48 @@ if (user != null)
         }
         string promptConfirmation()
         {
-
+            Console.WriteLine();
+            Console.Write("Are you sure you want to register this car? (yes/no) ");
+            return Console.ReadLine().Trim().ToLower();
         }
-        void confirmRegistration()
+        void confirmRegistration(string licencePlate, string carMake, string carModel, int year, int mileage, string availability, float charge, DateTime expiryDate, List<string> photoFiles, int branchNo)
         {
+            while (true)
+            {
+                string response = promptConfirmation();
+                if (response == "yes")
+                {
+                    createRegistration(licencePlate, carMake, carModel, year, mileage, availability, charge, expiryDate, photoFiles, branchNo);
+                    displayRegisteredCar();
+                    break;
+                }
+                else
+                {
+                    displayRegistrationCancelled();
+                    break;
+                }
+            }
 
         }
 
-        bool createRegistration()
+        void createRegistration(string licencePlate, string carMake, string carModel, int year, int mileage, string availability, float charge, DateTime expiryDate, List<string> photoFiles, int branchNo)
         {
             var newCar = new Car
             {
                 CarOwnerId = carOwner.Id,
-                LicensePlate = licenceNo,
+                LicensePlate = licencePlate,
                 CarMake = carMake,
                 Model = carModel,
                 Year = year,
-                Mileage = carMileage,
+                Mileage = mileage,
                 Availability = availability,
                 Charge = charge,
             };
+            cars.Add(newCar);
+            AppendCarToCSV("Car_List.csv", newCar);
+            AppendPhotosToCSV("Photo_List.csv", licencePlate, photoFiles);
+
+            updateInsuranceList(newCar, branchNo, expiryDate);            
         }
 
         void updateInsuranceList(Car newCar, int branchNo, DateTime expiryDate)
@@ -796,7 +817,11 @@ if (user != null)
                 Company = selectedCompany
             };
             insuranceList.Add(newInsurance);
-            AppendInsuranceToCSV("Insurance_List.csv", newInsurance);
+            using (var writer = new StreamWriter("Insurance_List.csv", true))
+            {
+                string line = $"{branchNo},{newInsurance.Car.LicensePlate},{newInsurance.Car.CarOwnerId},{expiryDate:yyyy-MM-dd}";
+                writer.WriteLine(line);
+            }
         }
 
         void displayRegisteredCar()
@@ -813,13 +838,13 @@ if (user != null)
         void selectRegisterCar()
         {
             Console.WriteLine("========Please enter car details========");
-            enterLicencePlate();
-            enterCarMake();
-            enterCarModel();
-            enterYear();
-            enterMileage();
+            string licencePlate = enterLicencePlate();
+            string carMake = enterCarMake();
+            string carModel = enterCarModel();
+            int year = enterYear();
+            int mileage = enterMileage();
 
-            // upload photo
+            // Upload photos
             List<string> photoFiles = new List<string>();
             string photoFile;
             Console.WriteLine("========Please upload images of the car!========");
@@ -839,28 +864,30 @@ if (user != null)
                 if (validatePhoto(photoFile))
                 {
                     updatePhotoList(photoFiles, photoFile);
-                }  
+                }
                 else
                 {
-                    Console.WriteLine("Invalid file type. Please upload a file with a valid extension (jpg, png, jpeg, pdf).");
+                    displayInvalidPhoto();
                 }
             }
             displayPhotoList(photoFiles);
 
+            // Set charge
+            float charge = enterCharge();
 
-            // set charge
-            enterCharge();
-
-            // insurance details
+            // Insurance details
             displayInsuranceCompany();
-            enterInsuranceCompany();
-            enterInsuranceExpiryDate();
+            int branchNo = enterInsuranceCompany();
+            DateTime expiryDate = enterInsuranceExpiryDate();
 
-            // set availability
-            setAvailability();
+            // Set availability
+            string availability = setAvailability();
 
-            // comfirm registration
+            // Display summary
+            displaySummary(licencePlate, carMake, carModel, year, mileage, availability, charge);
 
+            // Confirm registration
+            confirmRegistration(licencePlate, carMake, carModel, year, mileage, availability, charge, expiryDate, photoFiles, branchNo);
         }
     }
     else if (user is Renter renter)
@@ -1022,6 +1049,7 @@ if (user != null)
             MakeBooking(selectedCar);
         }
 
+        // Charlotte Lee S10258027K
         PickUpMethod initialisePickUpMethod(string startDateTime, PickUpMethod pickUpMethod, int locationIndex)
         {
             Pickup selfpickup = new Pickup
@@ -1034,6 +1062,7 @@ if (user != null)
             return pickUpMethod;
         }
 
+        //Charlotte Lee S10258027K
         ReturnMethod initialiseReturnMethod(string endDateTime, ReturnMethod returnMethod, int locationIndex)
         {
             SelfReturn selfReturn = new SelfReturn
@@ -1046,6 +1075,7 @@ if (user != null)
             return selfReturn;
         }
 
+        //Charlotte Lee S10258027K
         (DeliverCar, double) initialiseDeliveryPickUp(string startDateTime, DeliverCar pickUpMethod, string deliveryLocation, double deliveryFee)
         {
             DeliverCar delivery = new DeliverCar
@@ -1058,6 +1088,7 @@ if (user != null)
             return (pickUpMethod, deliveryFee);
         }
 
+        //Charlotte Lee S10258027K
         (DeliveryReturn, double) initialiseDeliveryReturn(string endDateTime, DeliveryReturn returnMethod, string returnLocation, double deliveryFee)
         {
             DeliveryReturn deliveryReturn = new DeliveryReturn
@@ -1071,6 +1102,7 @@ if (user != null)
             return (returnMethod, deliveryFee);
         }
 
+        //Charlotte Lee S10258027K
         (DateTime, DateTime, TimeSpan, double, double, double) getBookingDetails(string startDateTime, string endDateTime, Car selectedCar, double deliveryFee) {
             DateTime startTime = DateTime.ParseExact(startDateTime, "yyyy-MM-dd hh:mm tt", null);
             DateTime endTime = DateTime.ParseExact(endDateTime, "yyyy-MM-dd hh:mm tt", null);
@@ -1082,6 +1114,7 @@ if (user != null)
             return (startTime, endTime, duration, totalHours, totalCharge, totalDeliveryFee);
         }
 
+        //Charlotte Lee S10258027K
         void displayBookingDetails(Car selectedCar, PickUpMethod pickUpMethod, ReturnMethod returnMethod, DateTime startDateTime, DateTime endDateTime, TimeSpan duration, double totalHours, double totalCharge, double totalDeliveryFee)
         {
             Console.WriteLine();
@@ -1128,6 +1161,7 @@ if (user != null)
             Console.WriteLine($"Final Total: {(totalCharge + totalDeliveryFee):C}");
         }
 
+        //Charlotte Lee S10258027K
         void displaySelectedCar(Car selectedCar)
         {
             Console.WriteLine();
@@ -1135,6 +1169,7 @@ if (user != null)
             Console.WriteLine($"{"License Plate:",-14} {selectedCar.LicensePlate,-9} {"Make:",-5} {selectedCar.CarMake,-15} {"Model:",-6} {selectedCar.Model,-9} {"Year:",-5} {selectedCar.Year,-6} {"Mileage:",-8} {selectedCar.Mileage,-14} {"Availability:",-13} {selectedCar.Availability} {"Charge per hour:",-16} ${selectedCar.Charge}");
         }
 
+        //Charlotte Lee S10258027K
         void displayAvailableDates(List<string> availableDates)
         {
             Console.WriteLine();
@@ -1144,6 +1179,8 @@ if (user != null)
                 Console.WriteLine(date);
             }
         }
+
+        //Charlotte Lee S10258027K
         void displayBookingConfirm()
         {
             Console.WriteLine();
@@ -1153,53 +1190,62 @@ if (user != null)
             Console.WriteLine("Continue to Payment");
         }
 
+        //Charlotte Lee S10258027K
         void displayRedoBooking()
         {
             Console.WriteLine();
             Console.WriteLine("Redoing the booking...");
         }
 
+        //Charlotte Lee S10258027K
         void displayExitBooking()
         {
             Console.WriteLine();
             Console.WriteLine("Booking Cancelled. Exiting.");
         }
 
+        //Charlotte Lee S10258027K
         void displayRedoBookingInvalid()
         {
             Console.WriteLine();
             Console.WriteLine("Invalid choice. Please enter 'C', 'R', or 'E'.");
         }
 
+        //Charlotte Lee S10258027K
         void displayMonthInvalid()
         {
             Console.WriteLine("Invalid month. Please enter a number between 1 and 12.");
             Console.WriteLine();
         }
 
+        //Charlotte Lee S10258027K
         void displayInvalidFilterChoice()
         {
             Console.WriteLine("Invalid choice. Please enter 'Y' for yes or 'N' for no.");
         }
 
+        //Charlotte Lee S10258027K
         void displayInvalidStartDateTime()
         {
             Console.WriteLine("Invalid start date and time or it is unavailable, or it is the last available date. Please try again.");
             Console.WriteLine();
         }
 
+        //Charlotte Lee S10258027K
         void displayInvalidEndDateTime()
         {
             Console.WriteLine("Invalid end date and time or it is unavailable, or it is the first available date, or end date and time is before start date and time. Please try again.");
             Console.WriteLine();
         }
 
+        //Charlotte Lee S10258027K
         void displayBookingValidMessage()
         {
             Console.WriteLine();
             Console.WriteLine("Booking date is valid.");
         }
 
+        //Charlotte Lee S10258027K
         void displayBookingTimeInvalid()
         {
             Console.WriteLine();
@@ -1207,12 +1253,14 @@ if (user != null)
             Console.WriteLine();
         }
 
+        //Charlotte Lee S10258027K
         void promptFilterChoice()
         {
             Console.WriteLine();
             Console.WriteLine("Do you want to filter the available time slots by selecting a specific month? ‘Y’ or ‘N’");
         }
 
+        //Charlotte Lee S10258027K
         string selectFilterChoice()
         {
             string filterChoice = Console.ReadLine().Trim().ToUpper();
@@ -1220,16 +1268,19 @@ if (user != null)
             return filterChoice;
         }
 
+        //Charlotte Lee S10258027K
         void promptFilterMonth()
         {
             Console.WriteLine("Enter the month number 1-12 (January-December) you want to filter:");
         }
 
+        //Charlotte Lee S10258027K
         List<string> FilteredDates(int month, List<string> availableDates)
         {
             return availableDates.Where(date => DateTime.TryParse(date, out DateTime dt) && dt.Month == month).ToList();
         }
 
+        //Charlotte Lee S10258027K
         void displayFilteredDates(int month, List<string> filteredDates)
         {
             string monthName = new DateTime(1, month, 1).ToString("MMMM");
@@ -1241,6 +1292,7 @@ if (user != null)
             }
         }
 
+        //Charlotte Lee S10258027K
         void promptStartDateTimeSlot()
         {
             Console.WriteLine("Please enter the start date and time slot for your booking (yyyy-MM-dd hh:mm tt): ");
@@ -1255,11 +1307,13 @@ if (user != null)
             return false;
         }
 
+        //Charlotte Lee S10258027K
         void promptEndDateTimeSlot()
         {
             Console.WriteLine("Please enter the end date and time slot for your booking (yyyy-MM-dd hh:mm tt): ");
         }
 
+        //Charlotte Lee S10258027K
         bool validateEndDateTimeSlot(string startDateTime, string endDateTime, List<string> availableDates, Car selectedCar)
         {
             DateTime startDate, endDate;
@@ -1272,12 +1326,14 @@ if (user != null)
             return false;
         }
 
+        //Charlotte Lee S10258027K
         void promptPickUpOption()
         {
             Console.WriteLine();
             Console.WriteLine("Do you want to pick up the car yourself or have it delivered? Enter 'P' for pickup or 'D' for delivery: ");
         }
 
+        //Charlotte Lee S10258027K
         void displayiCarLocations()
         {
             Console.WriteLine();
@@ -1288,83 +1344,97 @@ if (user != null)
             }
         }
 
+        //Charlotte Lee S10258027K
         void promptiCarLocationChoice()
         {
             Console.WriteLine();
             Console.WriteLine("Enter the number of the location where you want to pick up the car: ");
         }
 
+        //Charlotte Lee S10258027K
         void displayInvalidLocation()
         {
             Console.WriteLine("Invalid location number. Please try again.");
             Console.WriteLine();
         }
 
+        //Charlotte Lee S10258027K
         void promptDeliveryLocation()
         {
             Console.WriteLine();
             Console.WriteLine("Enter the delivery location in this format: Postal Code, Address, Country: ");
         }
 
+        //Charlotte Lee S10258027K
         string enterDeliveryLocation()
         {
             string deliveryLocation = Console.ReadLine();
             return deliveryLocation;
         }
 
+        //Charlotte Lee S10258027K
         void displayInvalidPostalCode()
         {
             Console.WriteLine("Invalid postal code. It must be exactly 6 digits long and contain only numbers. Please try again.");
             Console.WriteLine();
         }
 
+        //Charlotte Lee S10258027K
         void displayInvalidCountry()
         {
             Console.WriteLine("Invalid location. Ensure the country is 'Singapore' and the format is correct. Please try again.");
                                 Console.WriteLine();
         }
 
+        //Charlotte Lee S10258027K
         void displayInvalidPickupChoice()
         {
             Console.WriteLine("Invalid choice. Please enter 'P' for pickup or 'D' for delivery.");
             Console.WriteLine();
         }
 
+        //Charlotte Lee S10258027K
         void promptReturnOption()
         {
             Console.WriteLine("Do you want to return the car yourself or have it picked up? Enter 'S' for self-return or 'D' for delivery return: ");
         }
 
+        //Charlotte Lee S10258027K
         void promptiCarLocationChoiceReturn()
         {
             Console.WriteLine();
             Console.WriteLine("Enter the number of the location where you want to return the car: ");
         }
 
+        //Charlotte Lee S10258027K
         void promptReturnDeliveryLocation()
         {
             Console.WriteLine();
             Console.WriteLine("Enter the return delivery location in this format: Postal Code, Address, Country: ");
         }
 
+        //Charlotte Lee S10258027K
         void displayInvalidReturnChoice()
         {
             Console.WriteLine("Invalid choice. Please enter 'S' for self-return or 'D' for delivery return.");
             Console.WriteLine();
         }
 
+        //Charlotte Lee S10258027K
         void promptConfirmBooking()
         {
             Console.WriteLine();
             Console.WriteLine("Would you like to: [C]onfirm the booking, [R]edo the booking, or [E]xit and cancel the booking?");
         }
 
+        //Charlotte Lee S10258027K
         string enterConfirmBooking()
         {
             string choice = Console.ReadLine().ToUpper();
             return choice;
         }
 
+        //Charlotte Lee S10258027K
         void MakeBooking(Car selectedCar)
         {
             bool redoBooking = true;
@@ -1642,7 +1712,7 @@ if (user != null)
             Console.WriteLine("Payment History:");
         }
 
-        // make payment 
+        // Sudarsanam Rithika (S10257149F)
         void MakePayment()
         {
             Booking booking = getUnpaidBooking();
@@ -1775,23 +1845,40 @@ if (user != null)
             }
         }
 
+        // Sudarsanam Rithika (S10257149F)
         string getBookingStatus(Booking booking)
         {
             return booking.Status;
         }
 
+        // Sudarsanam Rithika (S10257149F)
         void promptProceedPayment()
         {
             Console.WriteLine("Confirm payment amount? (yes/no) ");
         }
 
+        // Sudarsanam Rithika (S10257149F)
         string proceedPayment()
         {
             string res = Console.ReadLine();
             return res;
         }
+        // Sudarsanam Rithika (S10257149F)
+        Booking getUnpaidBooking()
+        {
+            Booking unpaidBooking = null;
+            foreach (Booking booking in renter.Bookings)
+            {
+                if (booking.Status == "Pending" || booking.Status == "Picked Up" || booking.Status == "Completed")
+                {
+                    unpaidBooking = booking;
+                }
 
-        //return car
+                else continue;
+            }
+            return unpaidBooking;
+        }
+        // Isabelle Tan S10257093F
         void returnCar()
         {
             Console.WriteLine("Select: \n[1] Return to iCar Station \n[2] Return from Desired Location");
@@ -1810,7 +1897,7 @@ if (user != null)
             }
         }
 
-        // return to iCar Station
+        // Isabelle Tan S10257093F
         void returnToiCarStation()
         {
             double totalReturnFee = 0;
@@ -1868,6 +1955,7 @@ if (user != null)
 
         }
 
+        // Isabelle Tan S10257093F
         Booking getOngoingBooking()
         {
             Booking ongoingBooking = null;
@@ -1888,7 +1976,7 @@ if (user != null)
             return DateTime.Now;
         }
 
-        //calculate penalty fee
+        //calculate penalty fee - Isabelle Tan S10257093F
         double calculatePenaltyFee(DateTime retDateTime, DateTime endDate, Booking ongoingBooking)
         {
             double penaltyFee = 0;
@@ -1903,7 +1991,7 @@ if (user != null)
             string message = "Penalty Fee for late return: " + penaltyFee;
             Console.WriteLine(message);
         }
-        //prompt check for damages
+        //prompt check for damages - Isabelle Tan S10257093F
         string promptCheckForDamages()
         {
             Console.WriteLine("Please check for damages. If there are damages, enter 'Has Damages'. Else enter 'No Damages'.");
@@ -1916,6 +2004,7 @@ if (user != null)
             }
             return damages;
         }
+        // Isabelle Tan S10257093F
         double updateDamages(string damage)
         {
             double damageFee = 0;
@@ -1926,7 +2015,7 @@ if (user != null)
             return damageFee;
 
         }
-
+        // Isabelle Tan S10257093F
         double reportAccident()
         {
             Booking booking = getOngoingBooking();
@@ -1934,18 +2023,22 @@ if (user != null)
             booking.Payment.TotalFee += 100;
             return 100;
         }
+        // Isabelle Tan S10257093F
         void displayNoOutstandingFees()
         {
             Console.WriteLine("No outstanding fees.");
         }
+        // Isabelle Tan S10257093F
         void displayRentalCompleted()
         {
             Console.WriteLine("Rental Completed");
         }
+        // Isabelle Tan S10257093F
         void displayIncorrectReturnMethod()
         {
             Console.WriteLine("Wrong return method. Returning to main menu.");
         }
+        // Isabelle Tan S10257093F
         void displayNoOngoingBookings()
         {
             Console.WriteLine("No ongoing bookings.");
@@ -1965,22 +2058,6 @@ if (user != null)
             }
             return ongoingBooking;
         }
-
-        Booking getUnpaidBooking()
-        {
-            Booking unpaidBooking = null;
-            foreach (Booking booking in renter.Bookings)
-            {
-                if (booking.Status == "Pending" || booking.Status == "Picked Up" || booking.Status == "Completed")
-                {
-                    unpaidBooking = booking;
-                }
-
-                else continue;
-            }
-            return unpaidBooking;
-        }
-
         //pickup car
         void PickUpCar()
         {
@@ -2043,16 +2120,19 @@ void displayUserDetails(User user)
     }
 }
 
+// Sudarsanam Rithika (S10257149F)
 void displayInsufficientFunds()
 {
     Console.WriteLine("Balance insufficient! Please choose another payment method!");
 }
 
+// Sudarsanam Rithika (S10257149F)
 void displayNoUnpaidBooking()
 {
     Console.WriteLine("No ongoing booking or outstanding fees!");
 }
 
+// Sudarsanam Rithika (S10257149F)
 void promptPaymentMethod()
 {
     Console.WriteLine("Proceed with payment");
@@ -2064,12 +2144,14 @@ void promptPaymentMethod()
     Console.Write("Select Payment Method: ");
 }
 
+// Sudarsanam Rithika (S10257149F)
 string choosePaymentMethod()
 {
     string method = Console.ReadLine();
     return method.ToUpper();
 }
 
+// Sudarsanam Rithika (S10257149F)
 DigitalWallet validateDigitalWalletInfo()
 {
     Console.Write("Enter wallet type: ");
@@ -2097,6 +2179,7 @@ DigitalWallet validateDigitalWalletInfo()
     return digitalWallet;
 }
 
+// Sudarsanam Rithika (S10257149F)
 DebitCard validateDebitCardInfo()
 {
     string cardNum;
@@ -2133,6 +2216,7 @@ DebitCard validateDebitCardInfo()
     return debitCard;
 }
 
+// Sudarsanam Rithika (S10257149F)
 CreditCard validateCreditCardInfo()
 {
     string cardNum;
@@ -2169,6 +2253,7 @@ CreditCard validateCreditCardInfo()
     return creditCard;
 }
 
+// Sudarsanam Rithika (S10257149F)
 void promptReceiptDeliveryMethod()
 {
     Console.WriteLine("How would you like receipt to be sent?");
@@ -2176,6 +2261,7 @@ void promptReceiptDeliveryMethod()
     Console.WriteLine("2. Phone number");
 }
 
+// Sudarsanam Rithika (S10257149F)
 string enterReceiptDeliveryMethod()
 {
     Console.Write("Enter delivery method: ");
@@ -2185,24 +2271,28 @@ string enterReceiptDeliveryMethod()
     return res.ToUpper();
 }
 
+// Sudarsanam Rithika (S10257149F)
 string GenerateReceipt(Renter user)
 {
     Console.WriteLine("Receipt generated for user: " + user.Email);
     return "Receipt generated"; 
 }
 
+// Sudarsanam Rithika (S10257149F)
 void sendEmailReceipt(Renter user)
 {
     Console.WriteLine("Receipt sent via email to " + user.Email);
     DisplayReceiptConfirmation(true);
 }
 
+// Sudarsanam Rithika (S10257149F)
 void sendSMSReceipt(Renter user)
 {
     Console.WriteLine("Receipt sent via SMS to " + user.ContactNum);
     DisplayReceiptConfirmation(true);
 }
 
+// Sudarsanam Rithika (S10257149F)
 void DisplayReceiptConfirmation(bool success)
 {
     if (success)
@@ -2215,6 +2305,7 @@ void DisplayReceiptConfirmation(bool success)
     }
 }
 
+// Sudarsanam Rithika (S10257149F)
 // display current booking details
 void displayBooking(Booking currentBooking)
 {

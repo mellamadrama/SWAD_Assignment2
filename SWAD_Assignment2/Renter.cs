@@ -44,6 +44,7 @@ namespace SWAD_Assignment2
         }
         public override string GetRole() => "Renter";
 
+        //Charlotte Lee S10258027K
         public void AddBooking(Booking booking)
         {
             if (booking == null)
